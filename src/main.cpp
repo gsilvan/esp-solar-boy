@@ -3,7 +3,9 @@
 #include <ModbusIP_ESP8266.h>
 #include <Preferences.h>
 
+#include <algorithm>
 #include <deque>
+#include <numeric>
 
 Preferences prefs;
 
@@ -24,6 +26,7 @@ uint16_t INPUT_POWER = 32064;
 const uint64_t interval = 2000;
 uint64_t previousMillis = 0;
 uint64_t last_deque_update = 0;
+uint64_t last_cycle_start = 0;
 
 /* DEQUE */
 std::deque<int> input_power_history;
@@ -156,16 +159,16 @@ void handleGetSettings() {
 
 void handlePostSettings() {
     if (server.args() > 0) {
-        settings_battery_charge = (u_int16_t) server.arg("pin-0-battery").toInt();
+        settings_battery_charge = (u_int16_t)server.arg("pin-0-battery").toInt();
         prefs.putUShort("settings-p0-battery-charge", settings_battery_charge);
 
-        settings_input_power = (u_int32_t) server.arg("pin-0-input-power").toInt();
+        settings_input_power = (u_int32_t)server.arg("pin-0-input-power").toInt();
         prefs.putUInt("settings-p0-input-power", settings_input_power);
 
-        settings_monitoring_window_minutes = (u_int8_t) server.arg("pin-0-timer").toInt();
+        settings_monitoring_window_minutes = (u_int8_t)server.arg("pin-0-timer").toInt();
         prefs.putUChar("settings-p0-monitoring-window", settings_monitoring_window_minutes);
 
-        settings_switch_cycle_minutes = (u_int8_t) server.arg("pin-0-cycle").toInt();
+        settings_switch_cycle_minutes = (u_int8_t)server.arg("pin-0-cycle").toInt();
         prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
 
         server.sendHeader("Location", "/settings", true);
@@ -176,6 +179,23 @@ void handlePostSettings() {
 }
 
 void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>"); }
+
+bool is_pin0_on = false;
+
+bool switch_pin(uint8_t pin) {
+    auto min_battery = *std::min_element(battery_charge_history.begin(), battery_charge_history.end());
+    double input_sum = std::accumulate(input_power_history.begin(), input_power_history.end(), 0);
+    int mean_input = (int)(input_sum / input_power_history.size());
+    bool is_on = (min_battery >= settings_battery_charge) && (mean_input >= settings_input_power);
+    digitalWrite(pin, is_on);
+    Serial.print("Min battery: ");
+    Serial.println(min_battery);
+    Serial.print("Mean input power: ");
+    Serial.println(mean_input);
+    Serial.print("PIN ON: ");
+    Serial.println(is_on);
+    return is_on;
+}
 
 void setup() {
     prefs.begin("esp-solar-boy");
@@ -208,7 +228,7 @@ void setup() {
     mb.client();
 
     server.on("/", handleIndex);
-    server.on("/settings", HTTP_GET , handleGetSettings);
+    server.on("/settings", HTTP_GET, handleGetSettings);
     server.on("/settings", HTTP_POST, handlePostSettings);
     server.onNotFound(handleNotFound);
 
@@ -243,20 +263,12 @@ void loop() {
             mb.connect(inverter.ip);
         }
 
-        if (inverter.battery_state_of_capacity / 10 >= 0) {
-            digitalWrite(D2, HIGH);
-        }
-        if (inverter.battery_state_of_capacity / 10 >= 33) {
-            digitalWrite(D1, HIGH);
-        }
-        if (inverter.battery_state_of_capacity / 10 < 33) {
-            digitalWrite(D1, LOW);
-        }
-        if (inverter.battery_state_of_capacity / 10 >= 66) {
-            digitalWrite(D0, HIGH);
-        }
-        if (inverter.battery_state_of_capacity / 10 < 66) {
-            digitalWrite(D0, LOW);
+        currentMillis = millis();
+        if (currentMillis - last_cycle_start >= settings_monitoring_window_minutes * 60 * 1000) {
+            is_pin0_on = switch_pin(D0);
+            if (is_pin0_on) {
+                last_cycle_start = millis();
+            }
         }
 
         Serial.printf("Battery: %d\n", inverter.battery_state_of_capacity / 10);
