@@ -111,47 +111,52 @@ void handleIndex() {
 }
 
 void handleGetSettings() {
-    char html[2048];
-    snprintf(html, sizeof(html),
-             "<!DOCTYPE html>"
-             "<html>"
-             "<head>"
-             "<title>Solar-Boy-2000</title>"
-             "<style>.input {width: 100%%;}</style>"
-             "</head>"
-             "<body>"
-             "<h1>Settings</h1>"
-             "<form method=\"post\">"
-             "<div style=\"max-width: 450px;\">"
-             "<h2>Device</h2>"
-             "<label for=\"settings-ssid\">SSID:</label>"
-             "<input class=\"input\" type=\"text\" id=\"settings-ssid\" name=\"settings-ssid\" placeholder=\"SSID\">"
-             "<label for=\"settings-password\">Password:</label>"
-             "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
-             "placeholder=\"Password\">"
-             "<button>Save</button>"
-             "<h2>PINs</h2>"
-             "<h3>PIN_0</h3>"
-             "<label for=\"pin-0-battery\">Battery charge (%%):</label>"
-             "<input class=\"input\" type=\"number\" min=\"0\" max=\"100\" step=\"1\" id=\"pin-0-battery\" "
-             "name=\"pin-0-battery\" value=\"%d\">"
-             "<label for=\"pin-0-input-power\">Power overflow (Watts):</label>"
-             "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
-             "value=\"%d\">"
-             "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
-             "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
-             "name=\"pin-0-timer\" value=\"%d\">"
-             "<label for=\"pin-0-cycle\">Switch cycle (minutes):</label>"
-             "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-cycle\" "
-             "name=\"pin-0-cycle\" value=\"%d\">"
-             "</div>"
-             "<button>Save</button>"
-             "</form>"
-             "<a href=\"/\">back</a>"
-             "</body>"
-             "</html>",
-             settings_battery_charge, settings_input_power, settings_monitoring_window_minutes,
-             settings_switch_cycle_minutes);
+    String html =
+        "<!DOCTYPE html>"
+        "<html>"
+        "<head>"
+        "<title>Solar-Boy-2000</title>"
+        "<style>.input {width: 100%;}</style>"
+        "</head>"
+        "<body>"
+        "<h1>Settings</h1>"
+        "<form method=\"post\">"
+        "<div style=\"max-width: 450px;\">"
+        "<h2>Device</h2>"
+        "<label for=\"settings-ssid\">SSID:</label>"
+        "<input class=\"input\" type=\"text\" id=\"settings-ssid\" name=\"settings-ssid\" placeholder=\"SSID\">"
+        "<label for=\"settings-password\">Password:</label>"
+        "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
+        "placeholder=\"Password\">"
+        "<button>Save</button>"
+        "<h2>PINs</h2>"
+        "<h3>PIN_0</h3>"
+        "<label for=\"pin-0-battery\">Battery charge (%):</label>"
+        "<input class=\"input\" type=\"number\" min=\"0\" max=\"100\" step=\"1\" id=\"pin-0-battery\" "
+        "name=\"pin-0-battery\" value=\"" +
+        String(settings_battery_charge) +
+        "\">"
+        "<label for=\"pin-0-input-power\">Power overflow (Watts):</label>"
+        "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
+        "value=\"" +
+        String(settings_input_power) +
+        "\">"
+        "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
+        "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
+        "name=\"pin-0-timer\" value=\"" +
+        String(settings_monitoring_window_minutes) +
+        "\">"
+        "<label for=\"pin-0-cycle\">Switch cycle (minutes):</label>"
+        "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-cycle\" "
+        "name=\"pin-0-cycle\" value=\"" +
+        String(settings_switch_cycle_minutes) +
+        "\">"
+        "</div>"
+        "<button>Save</button>"
+        "</form>"
+        "<a href=\"/\">back</a>"
+        "</body>"
+        "</html>";
     server.send(200, "text/html", html);
 }
 
