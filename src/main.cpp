@@ -8,18 +8,13 @@
 #include <numeric>
 
 Preferences prefs;
-
 ESP8266WebServer server(80);
-
 ModbusIP mb;
 
+/* MODBUS REGISTERS */
 uint16_t RUNNING_STATUS = 37000;
-
 uint16_t CHARGE_DISCHARGE = 37001;
-
 uint16_t SOC = 37004;
-uint16_t soc = 0;
-
 uint16_t INPUT_POWER = 32064;
 
 /* TIMERS */
@@ -37,6 +32,9 @@ uint16_t settings_battery_charge;
 uint32_t settings_input_power;
 uint8_t settings_monitoring_window_minutes;
 uint8_t settings_switch_cycle_minutes;
+
+/* PINS */
+bool is_pin0_on = false;
 
 /* INVERTERS */
 enum Sun2000BatteryState {
@@ -179,8 +177,6 @@ void handlePostSettings() {
 }
 
 void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>"); }
-
-bool is_pin0_on = false;
 
 bool switch_pin(uint8_t pin) {
     auto min_battery = *std::min_element(battery_charge_history.begin(), battery_charge_history.end());
