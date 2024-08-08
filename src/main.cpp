@@ -23,9 +23,12 @@ uint16_t INPUT_POWER = 32064;
 /* TIMERS */
 const uint64_t interval = 2000;
 uint64_t previousMillis = 0;
+uint64_t last_deque_update = 0;
 
 /* DEQUE */
 std::deque<int> input_power_history;
+std::deque<int> battery_charge_history;
+const uint16_t DEQUE_SIZE = 480;  // use a multiple of 60
 
 uint16_t settings_battery_charge;
 uint32_t settings_input_power;
@@ -261,8 +264,11 @@ void loop() {
         Serial.printf("Charge: %d\n",
                       (inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16));
         Serial.printf("Input Power: %d\n", (inverter.input_power >> 16) | (inverter.input_power << 16));
+    }
 
-        if (input_power_history.size() >= 128) {
+    currentMillis = millis();
+    if (currentMillis - last_deque_update >= (DEQUE_SIZE / settings_monitoring_window_minutes) * 1000) {
+        if (input_power_history.size() >= DEQUE_SIZE) {
             input_power_history.pop_front();
         }
         input_power_history.push_back((inverter.input_power >> 16) | (inverter.input_power << 16));
@@ -272,5 +278,18 @@ void loop() {
             Serial.print(" ");
         }
         Serial.println();
+
+        if (battery_charge_history.size() >= DEQUE_SIZE) {
+            battery_charge_history.pop_front();
+        }
+        battery_charge_history.push_back(inverter.battery_state_of_capacity / 10);
+
+        for (int val : battery_charge_history) {
+            Serial.print(val);
+            Serial.print(" ");
+        }
+        Serial.println();
+
+        last_deque_update = millis();
     }
 }
