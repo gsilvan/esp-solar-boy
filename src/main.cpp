@@ -2,10 +2,13 @@
 #include <ESP8266WiFi.h>
 #include <ModbusIP_ESP8266.h>
 #include <Preferences.h>
+#include <WiFiManager.h>
 
 #include <algorithm>
 #include <deque>
 #include <numeric>
+
+WiFiManager wifiManager;
 
 Preferences prefs;
 ESP8266WebServer server(80);
@@ -167,6 +170,8 @@ bool switch_pin(uint8_t pin) {
 }
 
 void setup() {
+    wifiManager.autoConnect("esp-solar-boy", "changemeplease");
+
     prefs.begin("esp-solar-boy");
     settings_battery_charge = prefs.getUShort("settings-p0-battery-charge", 95);
     settings_input_power = prefs.getUInt("settings-p0-input-power", 1500);
@@ -177,12 +182,7 @@ void setup() {
     inverter.ip = IPAddress(127, 0, 0, 1);
 
     pinMode(D0, OUTPUT);
-    pinMode(D1, OUTPUT);
-    pinMode(D2, OUTPUT);
-    led_check();
     Serial.begin(9600);
-
-    WiFi.begin("change", "me");
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
