@@ -27,8 +27,8 @@ uint64_t previousMillis = 0;
 /* DEQUE */
 std::deque<int> input_power_history;
 
-uint8_t settings_battery_charge;
-uint32_t settings_power_overflow;
+uint16_t settings_battery_charge;
+uint32_t settings_input_power;
 uint8_t settings_monitoring_window_minutes;
 uint8_t settings_switch_cycle_minutes;
 
@@ -106,7 +106,7 @@ void handleIndex() {
     server.send(200, "text/html", html);
 }
 
-void handleSettings() {
+void handleGetSettings() {
     char html[2048];
     snprintf(html, sizeof(html),
              "<!DOCTYPE html>"
@@ -146,9 +146,30 @@ void handleSettings() {
              "<a href=\"/\">back</a>"
              "</body>"
              "</html>",
-             settings_battery_charge, settings_power_overflow, settings_monitoring_window_minutes,
+             settings_battery_charge, settings_input_power, settings_monitoring_window_minutes,
              settings_switch_cycle_minutes);
     server.send(200, "text/html", html);
+}
+
+void handlePostSettings() {
+    if (server.args() > 0) {
+        settings_battery_charge = (u_int16_t) server.arg("pin-0-battery").toInt();
+        prefs.putUShort("settings-p0-battery-charge", settings_battery_charge);
+
+        settings_input_power = (u_int32_t) server.arg("pin-0-input-power").toInt();
+        prefs.putUInt("settings-p0-input-power", settings_input_power);
+
+        settings_monitoring_window_minutes = (u_int8_t) server.arg("pin-0-timer").toInt();
+        prefs.putUChar("settings-p0-monitoring-window", settings_monitoring_window_minutes);
+
+        settings_switch_cycle_minutes = (u_int8_t) server.arg("pin-0-cycle").toInt();
+        prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
+
+        server.sendHeader("Location", "/settings", true);
+        server.send(302, "text/plain", "");
+    } else {
+        server.send(400, "application/html", "<h1>Bad request</h1>");
+    }
 }
 
 void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>"); }
@@ -156,7 +177,7 @@ void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>")
 void setup() {
     prefs.begin("esp-solar-boy");
     settings_battery_charge = prefs.getUShort("settings-p0-battery-charge", 95);
-    settings_power_overflow = prefs.getUInt("settings-p0-power-overflow", 1500);
+    settings_input_power = prefs.getUInt("settings-p0-input-power", 1500);
     settings_monitoring_window_minutes = prefs.getUShort("settings-p0-monitoring-window", 5);
     settings_switch_cycle_minutes = prefs.getUShort("settings-p0-switch-cycle", 10);
 
@@ -184,7 +205,8 @@ void setup() {
     mb.client();
 
     server.on("/", handleIndex);
-    server.on("/settings", handleSettings);
+    server.on("/settings", HTTP_GET , handleGetSettings);
+    server.on("/settings", HTTP_POST, handlePostSettings);
     server.onNotFound(handleNotFound);
 
     server.begin();  // Actually start the server
