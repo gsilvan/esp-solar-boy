@@ -57,38 +57,6 @@ struct Sun2000 {
 
 Sun2000 inverter;
 
-void all_off() {
-    digitalWrite(D0, LOW);
-    digitalWrite(D1, LOW);
-    digitalWrite(D2, LOW);
-}
-
-void all_on() {
-    digitalWrite(D0, HIGH);
-    digitalWrite(D1, HIGH);
-    digitalWrite(D2, HIGH);
-}
-
-void led_check() {
-    all_off();
-    delay(400);
-    all_on();
-    delay(400);
-    all_off();
-    delay(400);
-    digitalWrite(D0, HIGH);
-    delay(400);
-    digitalWrite(D1, HIGH);
-    delay(400);
-    digitalWrite(D2, HIGH);
-    delay(400);
-    digitalWrite(D0, LOW);
-    delay(400);
-    digitalWrite(D1, LOW);
-    delay(400);
-    digitalWrite(D2, LOW);
-}
-
 void handleIndex() {
     char html[256];
     snprintf(html, sizeof(html),
