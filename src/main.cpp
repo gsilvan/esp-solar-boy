@@ -99,6 +99,10 @@ void handleGetSettings() {
         "<label for=\"settings-password\">Password:</label>"
         "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
         "placeholder=\"Password\">"
+        "<label for=\"settings-inverter-ip\">Inverter IPv4:</label>"
+        "<input class=\"input\" type=\"text\" id=\"settings-inverter-ip\" name=\"settings-inverter-ip\" value=\"" +
+        inverter.ip.toString() +
+        "\">"
         "<button>Save</button>"
         "<h2>PINs</h2>"
         "<h3>PIN_0</h3>"
@@ -145,6 +149,11 @@ void handlePostSettings() {
         settings_switch_cycle_minutes = (u_int8_t)server.arg("pin-0-cycle").toInt();
         prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
 
+        String new_inverter_ip_str = server.arg("settings-inverter-ip");
+        if (inverter.ip.fromString(new_inverter_ip_str)) {
+            prefs.putString("settings-inverter-ip", inverter.ip.toString());
+        }
+
         server.sendHeader("Location", "/settings", true);
         server.send(302, "text/plain", "");
     } else {
@@ -178,8 +187,9 @@ void setup() {
     settings_monitoring_window_minutes = prefs.getUShort("settings-p0-monitoring-window", 5);
     settings_switch_cycle_minutes = prefs.getUShort("settings-p0-switch-cycle", 10);
 
-    /* Initial Settings */
-    inverter.ip = IPAddress(127, 0, 0, 1);
+    /* Inverter Settings */
+    String inverter_ip_str = prefs.getString("settings-inverter-ip", "192.168.142.20");
+    inverter.ip.fromString(inverter_ip_str);
 
     pinMode(D0, OUTPUT);
     Serial.begin(9600);
