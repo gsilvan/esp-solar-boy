@@ -1,8 +1,11 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <ModbusIP_ESP8266.h>
+#include <Preferences.h>
 
 #include <deque>
+
+Preferences prefs;
 
 ESP8266WebServer server(80);
 
@@ -17,13 +20,17 @@ uint16_t soc = 0;
 
 uint16_t INPUT_POWER = 32064;
 
-
 /* TIMERS */
 const uint64_t interval = 2000;
 uint64_t previousMillis = 0;
 
 /* DEQUE */
 std::deque<int> input_power_history;
+
+uint8_t settings_battery_charge;
+uint32_t settings_power_overflow;
+uint8_t settings_monitoring_window_minutes;
+uint8_t settings_switch_cycle_minutes;
 
 /* INVERTERS */
 enum Sun2000BatteryState {
@@ -93,8 +100,7 @@ void handleIndex() {
              "<a href=\"/settings\">Settings</a>"
              "</body>"
              "</html>",
-             inverter.battery_state,
-             inverter.battery_state_of_capacity / 10,
+             inverter.battery_state, inverter.battery_state_of_capacity / 10,
              (inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16),
              (inverter.input_power >> 16) | (inverter.input_power << 16));
     server.send(200, "text/html", html);
@@ -117,34 +123,43 @@ void handleSettings() {
              "<label for=\"settings-ssid\">SSID:</label>"
              "<input class=\"input\" type=\"text\" id=\"settings-ssid\" name=\"settings-ssid\" placeholder=\"SSID\">"
              "<label for=\"settings-password\">Password:</label>"
-             "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" placeholder=\"Password\">"
+             "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
+             "placeholder=\"Password\">"
              "<button>Save</button>"
              "<h2>PINs</h2>"
              "<h3>PIN_0</h3>"
              "<label for=\"pin-0-battery\">Battery charge (%%):</label>"
              "<input class=\"input\" type=\"number\" min=\"0\" max=\"100\" step=\"1\" id=\"pin-0-battery\" "
-             "name=\"pin-0-battery\" value=\"90\">"
+             "name=\"pin-0-battery\" value=\"%d\">"
              "<label for=\"pin-0-input-power\">Power overflow (Watts):</label>"
              "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
-             "value=\"1000\">"
-             "<label for=\"pin-0-timer\">Monitoring period (minutes):</label>"
+             "value=\"%d\">"
+             "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
              "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
-             "name=\"pin-0-timer\" value=\"5\">"
+             "name=\"pin-0-timer\" value=\"%d\">"
              "<label for=\"pin-0-cycle\">Switch cycle (minutes):</label>"
              "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-cycle\" "
-             "name=\"pin-0-cycle\" value=\"10\">"
+             "name=\"pin-0-cycle\" value=\"%d\">"
              "</div>"
              "<button>Save</button>"
              "</form>"
              "<a href=\"/\">back</a>"
              "</body>"
-             "</html>");
+             "</html>",
+             settings_battery_charge, settings_power_overflow, settings_monitoring_window_minutes,
+             settings_switch_cycle_minutes);
     server.send(200, "text/html", html);
 }
 
 void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>"); }
 
 void setup() {
+    prefs.begin("esp-solar-boy");
+    settings_battery_charge = prefs.getUShort("settings-p0-battery-charge", 95);
+    settings_power_overflow = prefs.getUInt("settings-p0-power-overflow", 1500);
+    settings_monitoring_window_minutes = prefs.getUShort("settings-p0-monitoring-window", 5);
+    settings_switch_cycle_minutes = prefs.getUShort("settings-p0-switch-cycle", 10);
+
     /* Initial Settings */
     inverter.ip = IPAddress(127, 0, 0, 1);
 
