@@ -83,70 +83,70 @@ void handleIndex() {
 
 void handleGetSettings() {
     String html =
-        "<!DOCTYPE html>"
-        "<html>"
-        "<head>"
-        "<title>Solar-Boy-2000</title>"
-        "<style>.input {width: 100%;}</style>"
-        "</head>"
-        "<body>"
-        "<h1>Settings</h1>"
-        "<form method=\"post\">"
-        "<div style=\"max-width: 450px;\">"
-        "<h2>Device</h2>"
-        "<label for=\"settings-ssid\">SSID:</label>"
-        "<input class=\"input\" type=\"text\" id=\"settings-ssid\" name=\"settings-ssid\" placeholder=\"SSID\">"
-        "<label for=\"settings-password\">Password:</label>"
-        "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
-        "placeholder=\"Password\">"
-        "<label for=\"settings-inverter-ip\">Inverter IPv4:</label>"
-        "<input class=\"input\" type=\"text\" id=\"settings-inverter-ip\" name=\"settings-inverter-ip\" value=\"" +
-        inverter.ip.toString() +
-        "\">"
-        "<button>Save</button>"
-        "<h2>PINs</h2>"
-        "<h3>PIN_0</h3>"
-        "<label for=\"pin-0-battery\">Battery charge (%):</label>"
-        "<input class=\"input\" type=\"number\" min=\"0\" max=\"100\" step=\"1\" id=\"pin-0-battery\" "
-        "name=\"pin-0-battery\" value=\"" +
-        String(settings_battery_charge) +
-        "\">"
-        "<label for=\"pin-0-input-power\">Power overflow (Watts):</label>"
-        "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
-        "value=\"" +
-        String(settings_input_power) +
-        "\">"
-        "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
-        "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
-        "name=\"pin-0-timer\" value=\"" +
-        String(settings_monitoring_window_minutes) +
-        "\">"
-        "<label for=\"pin-0-cycle\">Switch cycle (minutes):</label>"
-        "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-cycle\" "
-        "name=\"pin-0-cycle\" value=\"" +
-        String(settings_switch_cycle_minutes) +
-        "\">"
-        "</div>"
-        "<button>Save</button>"
-        "</form>"
-        "<a href=\"/\">back</a>"
-        "</body>"
-        "</html>";
+            "<!DOCTYPE html>"
+            "<html>"
+            "<head>"
+            "<title>Solar-Boy-2000</title>"
+            "<style>.input {width: 100%;}</style>"
+            "</head>"
+            "<body>"
+            "<h1>Settings</h1>"
+            "<form method=\"post\">"
+            "<div style=\"max-width: 450px;\">"
+            "<h2>Device</h2>"
+            "<label for=\"settings-ssid\">SSID:</label>"
+            "<input class=\"input\" type=\"text\" id=\"settings-ssid\" name=\"settings-ssid\" placeholder=\"SSID\">"
+            "<label for=\"settings-password\">Password:</label>"
+            "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
+            "placeholder=\"Password\">"
+            "<label for=\"settings-inverter-ip\">Inverter IPv4:</label>"
+            "<input class=\"input\" type=\"text\" id=\"settings-inverter-ip\" name=\"settings-inverter-ip\" value=\"" +
+            inverter.ip.toString() +
+            "\">"
+            "<button>Save</button>"
+            "<h2>PINs</h2>"
+            "<h3>PIN_0</h3>"
+            "<label for=\"pin-0-battery\">Battery charge (%):</label>"
+            "<input class=\"input\" type=\"number\" min=\"0\" max=\"100\" step=\"1\" id=\"pin-0-battery\" "
+            "name=\"pin-0-battery\" value=\"" +
+            String(settings_battery_charge) +
+            "\">"
+            "<label for=\"pin-0-input-power\">Power overflow (Watts):</label>"
+            "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
+            "value=\"" +
+            String(settings_input_power) +
+            "\">"
+            "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
+            "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
+            "name=\"pin-0-timer\" value=\"" +
+            String(settings_monitoring_window_minutes) +
+            "\">"
+            "<label for=\"pin-0-cycle\">Switch cycle (minutes):</label>"
+            "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-cycle\" "
+            "name=\"pin-0-cycle\" value=\"" +
+            String(settings_switch_cycle_minutes) +
+            "\">"
+            "</div>"
+            "<button>Save</button>"
+            "</form>"
+            "<a href=\"/\">back</a>"
+            "</body>"
+            "</html>";
     server.send(200, "text/html", html);
 }
 
 void handlePostSettings() {
     if (server.args() > 0) {
-        settings_battery_charge = (u_int16_t)server.arg("pin-0-battery").toInt();
+        settings_battery_charge = (u_int16_t) server.arg("pin-0-battery").toInt();
         prefs.putUShort("settings-p0-battery-charge", settings_battery_charge);
 
-        settings_input_power = (u_int32_t)server.arg("pin-0-input-power").toInt();
+        settings_input_power = (u_int32_t) server.arg("pin-0-input-power").toInt();
         prefs.putUInt("settings-p0-input-power", settings_input_power);
 
-        settings_monitoring_window_minutes = (u_int8_t)server.arg("pin-0-timer").toInt();
+        settings_monitoring_window_minutes = (u_int8_t) server.arg("pin-0-timer").toInt();
         prefs.putUChar("settings-p0-monitoring-window", settings_monitoring_window_minutes);
 
-        settings_switch_cycle_minutes = (u_int8_t)server.arg("pin-0-cycle").toInt();
+        settings_switch_cycle_minutes = (u_int8_t) server.arg("pin-0-cycle").toInt();
         prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
 
         String new_inverter_ip_str = server.arg("settings-inverter-ip");
@@ -167,7 +167,7 @@ bool switch_pin(uint8_t pin) {
     bool is_on;
     auto min_battery = *std::min_element(battery_charge_history.begin(), battery_charge_history.end());
     double input_sum = std::accumulate(input_power_history.begin(), input_power_history.end(), 0);
-    int mean_input = (int)(input_sum / input_power_history.size());
+    int mean_input = (int) (input_sum / input_power_history.size());
     if (is_pin0_on) {
         is_on = (min_battery >= settings_battery_charge) && (mean_input >= 0);
     } else {
@@ -231,15 +231,15 @@ void loop() {
             delay(100);
             mb.task();
 
-            mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *)&inverter.battery_state, 1, nullptr, 1);
+            mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *) &inverter.battery_state, 1, nullptr, 1);
             delay(100);
             mb.task();
 
-            mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *)&inverter.battery_charging_power, 2, nullptr, 1);
+            mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1);
             delay(100);
             mb.task();
 
-            mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *)&inverter.input_power, 2, nullptr, 1);
+            mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *) &inverter.input_power, 2, nullptr, 1);
             delay(100);
             mb.task();
 
@@ -269,7 +269,7 @@ void loop() {
         }
         input_power_history.push_back((inverter.input_power >> 16) | (inverter.input_power << 16));
 
-        for (int val : input_power_history) {
+        for (int val: input_power_history) {
             Serial.print(val);
             Serial.print(" ");
         }
@@ -280,7 +280,7 @@ void loop() {
         }
         battery_charge_history.push_back(inverter.battery_state_of_capacity / 10);
 
-        for (int val : battery_charge_history) {
+        for (int val: battery_charge_history) {
             Serial.print(val);
             Serial.print(" ");
         }
