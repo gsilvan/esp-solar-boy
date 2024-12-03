@@ -164,10 +164,15 @@ void handlePostSettings() {
 void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>"); }
 
 bool switch_pin(uint8_t pin) {
+    bool is_on;
     auto min_battery = *std::min_element(battery_charge_history.begin(), battery_charge_history.end());
     double input_sum = std::accumulate(input_power_history.begin(), input_power_history.end(), 0);
     int mean_input = (int)(input_sum / input_power_history.size());
-    bool is_on = (min_battery >= settings_battery_charge) && (mean_input >= settings_input_power);
+    if (is_pin0_on) {
+        is_on = (min_battery >= settings_battery_charge) && (mean_input >= 0);
+    } else {
+        is_on = (min_battery >= settings_battery_charge) && (mean_input >= settings_input_power);
+    }
     digitalWrite(pin, is_on);
     Serial.print("Min battery: ");
     Serial.println(min_battery);
