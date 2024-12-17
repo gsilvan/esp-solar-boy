@@ -3,6 +3,7 @@
 #include <ModbusIP_ESP8266.h>
 #include <Preferences.h>
 #include <WiFiManager.h>
+#include <ESP8266HTTPUpdateServer.h>
 
 #include <algorithm>
 #include <deque>
@@ -12,6 +13,7 @@ WiFiManager wifiManager;
 
 Preferences prefs;
 ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
 ModbusIP mb;
 
 /* MODBUS REGISTERS */
@@ -215,6 +217,8 @@ void setup() {
     httpServer.on("/settings", HTTP_GET, handleGetSettings);
     httpServer.on("/settings", HTTP_POST, handlePostSettings);
     httpServer.onNotFound(handleNotFound);
+
+    httpUpdater.setup(&httpServer);  // Over the Air update via HTTP /update
 
     httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
