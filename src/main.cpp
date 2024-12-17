@@ -29,7 +29,7 @@ uint64_t last_cycle_start = 0;
 /* DEQUE */
 std::deque<int> input_power_history;
 std::deque<int> battery_charge_history;
-const uint16_t DEQUE_SIZE = 480;  // use a multiple of 60
+const uint16_t DEQUE_SIZE = 60;  // use a multiple of 60
 
 uint16_t settings_battery_charge;
 uint32_t settings_input_power;
@@ -263,7 +263,7 @@ void loop() {
     }
 
     currentMillis = millis();
-    if (currentMillis - last_deque_update >= (DEQUE_SIZE / settings_monitoring_window_minutes) * 1000) {
+    if (currentMillis - last_deque_update >= (settings_monitoring_window_minutes * 60 * 1000 / DEQUE_SIZE)) {
         if (input_power_history.size() >= DEQUE_SIZE) {
             input_power_history.pop_front();
         }
