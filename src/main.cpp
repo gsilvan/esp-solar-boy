@@ -11,7 +11,7 @@
 WiFiManager wifiManager;
 
 Preferences prefs;
-ESP8266WebServer server(80);
+ESP8266WebServer httpServer(80);
 ModbusIP mb;
 
 /* MODBUS REGISTERS */
@@ -78,7 +78,7 @@ void handleIndex() {
              inverter.battery_state, inverter.battery_state_of_capacity / 10,
              (inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16),
              (inverter.input_power >> 16) | (inverter.input_power << 16));
-    server.send(200, "text/html", html);
+    httpServer.send(200, "text/html", html);
 }
 
 void handleGetSettings() {
@@ -132,36 +132,36 @@ void handleGetSettings() {
             "<a href=\"/\">back</a>"
             "</body>"
             "</html>";
-    server.send(200, "text/html", html);
+    httpServer.send(200, "text/html", html);
 }
 
 void handlePostSettings() {
-    if (server.args() > 0) {
-        settings_battery_charge = (u_int16_t) server.arg("pin-0-battery").toInt();
+    if (httpServer.args() > 0) {
+        settings_battery_charge = (u_int16_t) httpServer.arg("pin-0-battery").toInt();
         prefs.putUShort("settings-p0-battery-charge", settings_battery_charge);
 
-        settings_input_power = (u_int32_t) server.arg("pin-0-input-power").toInt();
+        settings_input_power = (u_int32_t) httpServer.arg("pin-0-input-power").toInt();
         prefs.putUInt("settings-p0-input-power", settings_input_power);
 
-        settings_monitoring_window_minutes = (u_int8_t) server.arg("pin-0-timer").toInt();
+        settings_monitoring_window_minutes = (u_int8_t) httpServer.arg("pin-0-timer").toInt();
         prefs.putUChar("settings-p0-monitoring-window", settings_monitoring_window_minutes);
 
-        settings_switch_cycle_minutes = (u_int8_t) server.arg("pin-0-cycle").toInt();
+        settings_switch_cycle_minutes = (u_int8_t) httpServer.arg("pin-0-cycle").toInt();
         prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
 
-        String new_inverter_ip_str = server.arg("settings-inverter-ip");
+        String new_inverter_ip_str = httpServer.arg("settings-inverter-ip");
         if (inverter.ip.fromString(new_inverter_ip_str)) {
             prefs.putString("settings-inverter-ip", inverter.ip.toString());
         }
 
-        server.sendHeader("Location", "/settings", true);
-        server.send(302, "text/plain", "");
+        httpServer.sendHeader("Location", "/settings", true);
+        httpServer.send(302, "text/plain", "");
     } else {
-        server.send(400, "application/html", "<h1>Bad request</h1>");
+        httpServer.send(400, "application/html", "<h1>Bad request</h1>");
     }
 }
 
-void handleNotFound() { server.send(404, "text/html", "<h1>404: Not found</h1>"); }
+void handleNotFound() { httpServer.send(404, "text/html", "<h1>404: Not found</h1>"); }
 
 bool switch_pin(uint8_t pin) {
     bool is_on;
@@ -211,17 +211,17 @@ void setup() {
 
     mb.client();
 
-    server.on("/", handleIndex);
-    server.on("/settings", HTTP_GET, handleGetSettings);
-    server.on("/settings", HTTP_POST, handlePostSettings);
-    server.onNotFound(handleNotFound);
+    httpServer.on("/", handleIndex);
+    httpServer.on("/settings", HTTP_GET, handleGetSettings);
+    httpServer.on("/settings", HTTP_POST, handlePostSettings);
+    httpServer.onNotFound(handleNotFound);
 
-    server.begin();  // Actually start the server
+    httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
 }
 
 void loop() {
-    server.handleClient();
+    httpServer.handleClient();
 
     uint64_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
