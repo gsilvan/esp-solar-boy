@@ -197,7 +197,7 @@ void setup() {
     inverter.ip.fromString(inverter_ip_str);
 
     pinMode(D0, OUTPUT);
-    Serial.begin(9600);
+    Serial.begin(115200);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
