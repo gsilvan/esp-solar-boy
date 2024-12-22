@@ -1,0 +1,41 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*' # Trigger the workflow on version tags like v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Build PlatformIO Project
+        run: pio run
+
+      # Archive compiled binaries for upload
+      - name: Prepare binaries
+        run: |
+          mkdir -p binaries
+          cp .pio/build/*/*.bin binaries/ || true # Adjust file extension or paths if needed
+
+      # Upload binaries to GitHub release
+      - name: Create Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: binaries/*.bin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
