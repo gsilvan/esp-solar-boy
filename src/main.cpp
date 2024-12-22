@@ -1,3 +1,7 @@
+#include <algorithm>
+#include <deque>
+#include <numeric>
+
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <ModbusIP_ESP8266.h>
@@ -5,9 +9,7 @@
 #include <WiFiManager.h>
 #include <ESP8266HTTPUpdateServer.h>
 
-#include <algorithm>
-#include <deque>
-#include <numeric>
+#include "version.h"
 
 WiFiManager wifiManager;
 
@@ -186,6 +188,9 @@ bool switch_pin(uint8_t pin) {
 }
 
 void setup() {
+    Serial.begin(115200);
+    Serial.print("Firmware v");
+    Serial.println(FIRMWARE_VERSION);
     wifiManager.autoConnect("esp-solar-boy", "changemeplease");
 
     prefs.begin("esp-solar-boy");
@@ -199,7 +204,6 @@ void setup() {
     inverter.ip.fromString(inverter_ip_str);
 
     pinMode(D0, OUTPUT);
-    Serial.begin(115200);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
