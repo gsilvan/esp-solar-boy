@@ -4,6 +4,7 @@
 
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
 #include <ModbusIP_ESP8266.h>
 #include <Preferences.h>
 #include <WiFiManager.h>
@@ -12,6 +13,8 @@
 #include "version.h"
 
 WiFiManager wifiManager;
+
+const char* dns_name = "solarboy";
 
 Preferences prefs;
 ESP8266WebServer httpServer(80);
@@ -215,6 +218,11 @@ void setup() {
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
 
+    if (MDNS.begin(dns_name)) {
+        Serial.println("mDNS responder started");
+        Serial.println("http://" + String(dns_name) + ".local/");
+    }
+
     mb.client();
 
     httpServer.on("/", handleIndex);
@@ -230,6 +238,7 @@ void setup() {
 
 void loop() {
     httpServer.handleClient();
+    MDNS.update();
 
     uint64_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
