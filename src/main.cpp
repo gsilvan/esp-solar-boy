@@ -244,21 +244,37 @@ void loop() {
     if (currentMillis - previousMillis >= interval) {
         previousMillis = millis();
         if (mb.isConnected(inverter.ip)) {
-            mb.readHreg(inverter.ip, SOC, &inverter.battery_state_of_capacity, 1, nullptr, 1);
+           // SOC
+            if (mb.readHreg(inverter.ip, SOC, &inverter.battery_state_of_capacity, 1, nullptr, 1) != 0) {
+                Serial.println("Fehler beim Lesen des SOC-Registers");
+            } else {
+                mb.task();
+            }
             delay(100);
-            mb.task();
 
-            mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *) &inverter.battery_state, 1, nullptr, 1);
+            // RUNNING_STATUS
+            if (mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *) &inverter.battery_state, 1, nullptr, 1) != 0) {
+                Serial.println("Fehler beim Lesen des RUNNING_STATUS-Registers");
+            } else {
+                mb.task();
+            }
             delay(100);
-            mb.task();
 
-            mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1);
+            // CHARGE_DISCHARGE
+            if (mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1) != 0) {
+                Serial.println("Fehler beim Lesen des CHARGE_DISCHARGE-Registers");
+            } else {
+                mb.task();
+            }
             delay(100);
-            mb.task();
 
-            mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *) &inverter.input_power, 2, nullptr, 1);
+            // INPUT_POWER
+            if (mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *) &inverter.input_power, 2, nullptr, 1) != 0) {
+                Serial.println("Fehler beim Lesen des INPUT_POWER-Registers");
+            } else {
+                mb.task();
+            }
             delay(100);
-            mb.task();
 
         } else {
             mb.connect(inverter.ip);
