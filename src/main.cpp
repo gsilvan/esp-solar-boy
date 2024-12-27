@@ -122,7 +122,7 @@ void handleGetSettings() {
             "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
             "value=\"" +
             String(settings_input_power) +
-            "\">"
+            "\"><small><em> Hinweis: Muss mindestens 101 Watt betragen.</em></small>"
             "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
             "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
             "name=\"pin-0-timer\" value=\"" +
