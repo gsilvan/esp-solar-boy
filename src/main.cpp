@@ -176,7 +176,7 @@ bool switch_pin(uint8_t pin) {
     double input_sum = std::accumulate(input_power_history.begin(), input_power_history.end(), 0);
     int mean_input = (int) (input_sum / input_power_history.size());
     if (is_pin0_on) {
-        is_on = (min_battery >= settings_battery_charge) && (mean_input >= 0);
+        is_on = (min_battery >= settings_battery_charge) && (mean_input >= 100);
     } else {
         is_on = (min_battery >= settings_battery_charge) && (mean_input >= settings_input_power);
     }
@@ -306,11 +306,10 @@ void loop() {
         last_deque_update = millis();
     }
     
- // Regelmäßige Überprüfung der Schaltbedingungen
-        currentMillis = millis();
-        static uint64_t last_switch_check = 0;
-        if (currentMillis - last_switch_check >= (settings_switch_cycle_minutes * 60 * 1000)) {
-            last_switch_check = millis();
-            is_pin0_on = switch_pin(D0);
-        }
+    currentMillis = millis();
+    static uint64_t last_switch_check = 0;
+    if (currentMillis - last_switch_check >= (settings_switch_cycle_minutes * 60 * 1000)) {
+        last_switch_check = millis();
+        is_pin0_on = switch_pin(D0);
+    }
 }
