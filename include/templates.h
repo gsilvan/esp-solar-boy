@@ -146,7 +146,7 @@ static const char settingsHtmlTemplate[] PROGMEM =
         <label for="pin-0-battery">Battery charge (%):</label>
         <input class="input" type="number" min="0" max="100" step="1" id="pin-0-battery" name="pin-0-battery" value="%BATTERYCHARGE%">
         <label for="pin-0-input-power">Power overflow (Watts):</label>
-        <input class="input" type="number" step="100" id="pin-0-input-power" name="pin-0-input-power" value="%PIN0INPUTPOWER%">
+        <input class="input" type="number" min="100" step="100" id="pin-0-input-power" name="pin-0-input-power" value="%PIN0INPUTPOWER%">
         <label for="pin-0-timer">Monitoring window (minutes):</label>
         <input class="input" type="number" min="0" max="60" step="1" id="pin-0-timer" name="pin-0-timer" value="%PIN0TIMER%">
         <label for="pin-0-cycle">Switch cycle (minutes):</label>
