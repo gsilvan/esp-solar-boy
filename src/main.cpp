@@ -9,6 +9,8 @@
 #include <Preferences.h>
 #include <WiFiManager.h>
 #include <ESP8266HTTPUpdateServer.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
 #include "version.h"
 
@@ -67,6 +69,10 @@ struct Sun2000 {
 
 Sun2000 inverter;
 
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+u_int64_t lastInverterDataTimestamp = 0;
+
 static const char indexHtmlTemplate[] PROGMEM =
         R"(
 <!DOCTYPE html>
@@ -80,10 +86,25 @@ static const char indexHtmlTemplate[] PROGMEM =
     <p>Battery charge: %BATTERYCHARGE%</p>
     <p>Charge: %CHARGE%</p>
     <p>Input power: %INPUTPOWER%</p>
+    <p>Last update: %DATATIMESTAMP%</p>
     <a href="/settings">Settings</a>
 </body>
 </html>
 )";
+
+String formatTimestamp(u_int64_t epochTimestamp) {
+    unsigned long rawTime = epochTimestamp;
+    unsigned long hours = (rawTime % 86400L) / 3600;
+    String hoursStr = hours < 10 ? "0" + String(hours) : String(hours);
+
+    unsigned long minutes = (rawTime % 3600) / 60;
+    String minuteStr = minutes < 10 ? "0" + String(minutes) : String(minutes);
+
+    unsigned long seconds = rawTime % 60;
+    String secondStr = seconds < 10 ? "0" + String(seconds) : String(seconds);
+
+    return hoursStr + ":" + minuteStr + ":" + secondStr;
+}
 
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
@@ -91,6 +112,7 @@ void handleIndex() {
     html.replace("%BATTERYCHARGE%", String(inverter.battery_state_of_capacity / 10));
     html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
     html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
+    html.replace("%DATATIMESTAMP%", formatTimestamp(lastInverterDataTimestamp));
     httpServer.send(200, "text/html", html);
 }
 
@@ -239,6 +261,7 @@ void setup() {
 }
 
 void loop() {
+    timeClient.update();
     httpServer.handleClient();
     MDNS.update();
 
@@ -262,6 +285,7 @@ void loop() {
             delay(100);
             mb.task();
 
+            lastInverterDataTimestamp = timeClient.getEpochTime();
         } else {
             mb.connect(inverter.ip);
         }
