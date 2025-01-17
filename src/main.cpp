@@ -12,6 +12,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
+#include <Sun2000Inverter.h>
 #include "version.h"
 #include "dateutils.h"
 #include "templates.h"
@@ -70,6 +71,7 @@ struct Sun2000 {
 };
 
 Sun2000 inverter;
+Sun2000Inverter sun2000;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
@@ -177,6 +179,7 @@ void setup() {
     }
 
     mb.client();
+    sun2000.begin(IPAddress().fromString(inverter_ip_str), 502);
 
     httpServer.on("/", handleIndex);
     httpServer.on("/settings", HTTP_GET, handleSettings);
@@ -193,6 +196,7 @@ void loop() {
     timeClient.update();
     httpServer.handleClient();
     MDNS.update();
+    sun2000.update();
 
     uint64_t currentMillis = millis();
     if (currentMillis - previousMillis >= interval) {
@@ -260,7 +264,7 @@ void loop() {
 
         last_deque_update = millis();
     }
-    
+
     currentMillis = millis();
     static uint64_t last_switch_check = 0;
     if (currentMillis - last_switch_check >= (settings_switch_cycle_minutes * 60 * 1000)) {
