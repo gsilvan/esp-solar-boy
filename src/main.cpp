@@ -67,78 +67,80 @@ struct Sun2000 {
 
 Sun2000 inverter;
 
+static const char indexHtmlTemplate[] PROGMEM =
+        R"(
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Solar-Boy-2000</title>
+</head>
+<body>
+    <h1>Battery</h1>
+    <p>State: %STATE%</p>
+    <p>Battery charge: %BATTERYCHARGE%</p>
+    <p>Charge: %CHARGE%</p>
+    <p>Input power: %INPUTPOWER%</p>
+    <a href="/settings">Settings</a>
+</body>
+</html>
+)";
+
 void handleIndex() {
-    char html[256];
-    snprintf(html, sizeof(html),
-             "<!DOCTYPE html>"
-             "<html>"
-             "<head><title>Solar-Boy-2000</title></head>"
-             "<body>"
-             "<h1>Battery</h1>"
-             "<p>State: %d</p>"
-             "<p>Battery charge: %d</p>"
-             "<p>Charge: %d</p>"
-             "<p>Input power: %d</p>"
-             "<a href=\"/settings\">Settings</a>"
-             "</body>"
-             "</html>",
-             inverter.battery_state, inverter.battery_state_of_capacity / 10,
-             (inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16),
-             (inverter.input_power >> 16) | (inverter.input_power << 16));
+    String html(reinterpret_cast<const char *>(indexHtmlTemplate));
+    html.replace("%STATE%", String(inverter.battery_state));
+    html.replace("%BATTERYCHARGE%", String(inverter.battery_state_of_capacity / 10));
+    html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
+    html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
     httpServer.send(200, "text/html", html);
 }
 
-void handleGetSettings() {
-    String html =
-            "<!DOCTYPE html>"
-            "<html>"
-            "<head>"
-            "<title>Solar-Boy-2000</title>"
-            "<style>.input {width: 100%;}</style>"
-            "</head>"
-            "<body>"
-            "<h1>Settings</h1>"
-            "<form method=\"post\">"
-            "<div style=\"max-width: 450px;\">"
-            "<h2>Device</h2>"
-            "<label for=\"settings-ssid\">SSID:</label>"
-            "<input class=\"input\" type=\"text\" id=\"settings-ssid\" name=\"settings-ssid\" placeholder=\"SSID\">"
-            "<label for=\"settings-password\">Password:</label>"
-            "<input class=\"input\" type=\"password\" id=\"settings-password\" name=\"settings-password\" "
-            "placeholder=\"Password\">"
-            "<label for=\"settings-inverter-ip\">Inverter IPv4:</label>"
-            "<input class=\"input\" type=\"text\" id=\"settings-inverter-ip\" name=\"settings-inverter-ip\" value=\"" +
-            inverter.ip.toString() +
-            "\">"
-            "<button>Save</button>"
-            "<h2>PINs</h2>"
-            "<h3>PIN_0</h3>"
-            "<label for=\"pin-0-battery\">Battery charge (%):</label>"
-            "<input class=\"input\" type=\"number\" min=\"0\" max=\"100\" step=\"1\" id=\"pin-0-battery\" "
-            "name=\"pin-0-battery\" value=\"" +
-            String(settings_battery_charge) +
-            "\">"
-            "<label for=\"pin-0-input-power\">Power overflow (Watts):</label>"
-            "<input class=\"input\" type=\"number\" step=\"100\" id=\"pin-0-input-power\" name=\"pin-0-input-power\" "
-            "value=\"" +
-            String(settings_input_power) +
-            "\">"
-            "<label for=\"pin-0-timer\">Monitoring window (minutes):</label>"
-            "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-timer\" "
-            "name=\"pin-0-timer\" value=\"" +
-            String(settings_monitoring_window_minutes) +
-            "\">"
-            "<label for=\"pin-0-cycle\">Switch cycle (minutes):</label>"
-            "<input class=\"input\" type=\"number\" min=\"0\" max=\"60\" step=\"1\" id=\"pin-0-cycle\" "
-            "name=\"pin-0-cycle\" value=\"" +
-            String(settings_switch_cycle_minutes) +
-            "\">"
-            "</div>"
-            "<button>Save</button>"
-            "</form>"
-            "<a href=\"/\">back</a>"
-            "</body>"
-            "</html>";
+static const char settingsHtmlTemplate[] PROGMEM =
+        R"(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Solar-Boy-2000</title>
+    <style>
+        .input { width: 100%; }
+    </style>
+</head>
+<body>
+    <h1>Settings</h1>
+    <form method="post">
+    <div style="max-width: 450px;">
+        <h2>Device</h2>
+        <label for="settings-ssid">SSID:</label>
+        <input class="input" type="text" id="settings-ssid" name="settings-ssid" placeholder="SSID">
+        <label for="settings-password">Password:</label>
+        <input class="input" type="password" id="settings-password" name="settings-password" placeholder="Password">
+        <label for="settings-inverter-ip">Inverter IPv4:</label>
+        <input class="input" type="text" id="settings-inverter-ip" name="settings-inverter-ip" value="%IPADDRESS%">
+        <button>Save</button>
+        <h2>PINs</h2>
+        <h3>PIN_0</h3>
+        <label for="pin-0-battery">Battery charge (%):</label>
+        <input class="input" type="number" min="0" max="100" step="1" id="pin-0-battery" name="pin-0-battery" value="%BATTERYCHARGE%">
+        <label for="pin-0-input-power">Power overflow (Watts):</label>
+        <input class="input" type="number" step="100" id="pin-0-input-power" name="pin-0-input-power" value="%PIN0INPUTPOWER%">
+        <label for="pin-0-timer">Monitoring window (minutes):</label>
+        <input class="input" type="number" min="0" max="60" step="1" id="pin-0-timer" name="pin-0-timer" value="%PIN0TIMER%">
+        <label for="pin-0-cycle">Switch cycle (minutes):</label>
+        <input class="input" type="number" min="0" max="60" step="1" id="pin-0-cycle" name="pin-0-cycle" value="%PIN0CYCLE%">
+    </div>
+    <button>Save</button>
+    </form>
+    <a href="/">back</a>
+</body>
+</html>
+)";
+
+void handleSettings() {
+    String html(reinterpret_cast<const char *>(settingsHtmlTemplate));
+    html.replace("%IPADDRESS%", inverter.ip.toString());
+    html.replace("%BATTERYCHARGE%", String(settings_battery_charge));
+    html.replace("%PIN0INPUTPOWER%", String(settings_input_power));
+    html.replace("%PIN0TIMER%", String(settings_monitoring_window_minutes));
+    html.replace("%PIN0CYCLE%", String(settings_switch_cycle_minutes));
     httpServer.send(200, "text/html", html);
 }
 
@@ -226,7 +228,7 @@ void setup() {
     mb.client();
 
     httpServer.on("/", handleIndex);
-    httpServer.on("/settings", HTTP_GET, handleGetSettings);
+    httpServer.on("/settings", HTTP_GET, handleSettings);
     httpServer.on("/settings", HTTP_POST, handlePostSettings);
     httpServer.onNotFound(handleNotFound);
 
