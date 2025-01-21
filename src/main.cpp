@@ -17,7 +17,7 @@
 
 WiFiManager wifiManager;
 
-const char* dns_name = "solarboy";
+const char *dns_name = "solarboy";
 
 Preferences prefs;
 ESP8266WebServer httpServer(80);
@@ -259,7 +259,7 @@ void loop() {
 
         last_deque_update = millis();
     }
-    
+
     currentMillis = millis();
     static uint64_t last_switch_check = 0;
     if (currentMillis - last_switch_check >= (settings_switch_cycle_minutes * 60 * 1000)) {
