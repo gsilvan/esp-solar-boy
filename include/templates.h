@@ -75,26 +75,25 @@ static const char indexHtmlTemplate[] PROGMEM =
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">State</h3>
                         <p class="text-3xl font-bold text-blue-600">%STATE%</p>
-                        <p class="text-sm text-gray-500 mt-2">Last updated: %DATATIMESTAMP%</p>
                     </div>
                     <!-- Sample Card 2 -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">Battery charge</h3>
                         <p class="text-3xl font-bold text-green-600">%BATTERYCHARGE% %</p>
-                        <p class="text-sm text-gray-500 mt-2">Last updated: %DATATIMESTAMP%</p>
                     </div>
                     <!-- Sample Card 3 -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">Charge</h3>
                         <p class="text-3xl font-bold text-yellow-600">%CHARGE% W</p>
-                        <p class="text-sm text-gray-500 mt-2">Last updated: %DATATIMESTAMP%</p>
                     </div>
                     <!-- Sample Card 4 -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">Input power</h3>
                         <p class="text-3xl font-bold text-yellow-600">%INPUTPOWER% W</p>
-                        <p class="text-sm text-gray-500 mt-2">Last updated: %DATATIMESTAMP%</p>
                     </div>
+                </div>
+                <div class="py-3">
+                    <p class="text-sm text-gray-500 mt-2">Last updated: <span class="timestamp">%UNIXTIMESTAMP%</span></p>
                 </div>
             </div>
         </main>
@@ -113,6 +112,20 @@ static const char indexHtmlTemplate[] PROGMEM =
             if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
                 sidebar.classList.add('-translate-x-full');
             }
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const timestamps = document.querySelectorAll(".timestamp");
+            timestamps.forEach(element => {
+                const unixTimestamp = parseInt(element.textContent, 10);
+                if (!isNaN(unixTimestamp)) {
+                    const date = new Date(unixTimestamp * 1000);
+                    const localizedDate = date.toLocaleString();
+                    element.textContent = localizedDate;
+                } else {
+                    console.error("Invalid timestamp: ", element.textContent);
+                }
+            });
         });
     </script>
 </body>

@@ -13,7 +13,6 @@
 #include <WiFiUdp.h>
 
 #include "version.h"
-#include "dateutils.h"
 #include "templates.h"
 
 WiFiManager wifiManager;
@@ -81,7 +80,7 @@ void handleIndex() {
     html.replace("%BATTERYCHARGE%", String(inverter.battery_state_of_capacity / 10));
     html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
     html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
-    html.replace("%DATATIMESTAMP%", formatTimestamp(lastInverterDataTimestamp));
+    html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
     httpServer.send(200, "text/html", html);
 }
 
