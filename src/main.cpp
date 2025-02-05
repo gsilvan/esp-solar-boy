@@ -92,6 +92,7 @@ void handleIndex() {
     html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
     html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
     html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
+    html.replace("%PIN_0_CLASS%", is_pin0_on ? String("pin-active") : String("pin-inactive"));
     httpServer.send(200, "text/html", html);
 }
 

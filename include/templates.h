@@ -20,6 +20,8 @@ static const char indexHtmlTemplate[] PROGMEM =
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: "IBM Plex Mono", monospace; }
+        .pin-active { background-color: green; }
+        .pin-inactive { background-color: gray; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -70,8 +72,14 @@ static const char indexHtmlTemplate[] PROGMEM =
             </header>
             <div class="p-6">
                 <h2 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     <!-- Sample Card 1 -->
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-semibold text-gray-700 mr-3">Pin state</h3>
+                        <p class="text-3xl font-bold text-blue-600">
+                            <div class="w-4 h-4 rounded-full %PIN_0_CLASS%"></div>
+                        </p>
+                    </div>
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">State</h3>
                         <p class="text-3xl font-bold text-blue-600">%STATE%</p>
