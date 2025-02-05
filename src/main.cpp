@@ -74,9 +74,20 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
+String batteryStateStr (Sun2000BatteryState state) {
+    switch (state) {
+        case offline: return "offline";
+        case stand_by: return "stand-by";
+        case running: return "running";
+        case fault: return "fault";
+        case sleep_mode: return "sleeping";
+    }
+    return "";
+}
+
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
-    html.replace("%STATE%", String(inverter.battery_state));
+    html.replace("%STATE%", batteryStateStr(inverter.battery_state));
     html.replace("%BATTERYCHARGE%", String(inverter.battery_state_of_capacity / 10));
     html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
     html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
