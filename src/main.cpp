@@ -210,10 +210,21 @@ void loop() {
         previousMillis = millis();
         if (mb.isConnected(inverter.ip)) {
             mb.readHreg(inverter.ip, SOC, &inverter.battery_state_of_capacity, 1, nullptr, 1);
-            mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *) &inverter.battery_state, 1, nullptr, 1);
-            mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1);
-            mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *) &inverter.input_power, 2, nullptr, 1);
+            delay(100);
             mb.task();
+
+            mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *) &inverter.battery_state, 1, nullptr, 1);
+            delay(100);
+            mb.task();
+
+            mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1);
+            delay(100);
+            mb.task();
+
+            mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *) &inverter.input_power, 2, nullptr, 1);
+            delay(100);
+            mb.task();
+
             lastInverterDataTimestamp = timeClient.getEpochTime();
         } else {
             mb.connect(inverter.ip);
