@@ -45,7 +45,7 @@ u_int64_t lastInverterDataTimestamp = 0;
 
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
-    html.replace("%BATTERYCHARGE%", String(inverter.getBatteryStateOfCharge()));
+    html.replace("%BATTERYSOC%", String(inverter.getBatteryStateOfCharge()));
     html.replace("%CHARGE%", String(inverter.getBatteryChargePower()));
     html.replace("%PLANTPOWER%", String(inverter.getPlantPower()));
     html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
