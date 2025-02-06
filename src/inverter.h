@@ -20,7 +20,7 @@ public:
 
     [[nodiscard]] int32_t getBatteryChargePower() const;
 
-    [[nodiscard]] int32_t getGridPower() const;
+    [[nodiscard]] int32_t getPlantPower() const;
 
     [[nodiscard]] int32_t getPowerMeterActivePower() const;
 
@@ -40,7 +40,7 @@ private:
     ModbusIP _modbus;
     uint16_t _batteryStateOfCharge = 0;
     int32_t _batteryChargePower = 0;
-    int32_t _gridPower = 0;
+    int32_t _plantPower = 0;
     int32_t _powerMeterActivePower = 0;
     uint16_t _meterStatus = 0;
     uint16_t _state1 = 0;

@@ -19,7 +19,7 @@ bool Inverter::update() {
         } else {
             this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfCharge, 1, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePower, 2, nullptr, 1);
-            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_gridPower, 2, nullptr, 1);
+            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPower, 2, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatus, 1, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePower, 2, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1, 1, nullptr, 1);
@@ -40,14 +40,14 @@ int32_t Inverter::getBatteryChargePower() const {
     return (this->_batteryChargePower >> 16) | (this->_batteryChargePower << 16);
 }
 
-int32_t Inverter::getGridPower() const {
-    return (this->_gridPower >> 16) | (this->_gridPower << 16);
+int32_t Inverter::getPlantPower() const {
+    return (this->_plantPower >> 16) | (this->_plantPower << 16);
 }
 
 void Inverter::printy() const {
     Serial.printf("Battery: %d\n", this->getBatteryStateOfCharge());
     Serial.printf("Battery charge power: %d\n", this->getBatteryChargePower());
-    Serial.printf("Grid power: %d\n", this->getGridPower());
+    Serial.printf("Plant power: %d\n", this->getPlantPower());
     Serial.printf("Power meter status: %s\n", this->getMeterStatus().c_str());
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
     Serial.printf("State1: %s\n", this->getState1().c_str());

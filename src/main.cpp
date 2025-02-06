@@ -47,7 +47,7 @@ void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
     html.replace("%BATTERYCHARGE%", String(inverter.getBatteryStateOfCharge()));
     html.replace("%CHARGE%", String(inverter.getBatteryChargePower()));
-    html.replace("%INPUTPOWER%", String(inverter.getGridPower()));
+    html.replace("%PLANTPOWER%", String(inverter.getPlantPower()));
     html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
     html.replace("%PIN_0_CLASS%", is_pin0_on ? String("pin-active") : String("pin-inactive"));
     html.replace("%VERSION%", String(FIRMWARE_VERSION));
@@ -175,7 +175,7 @@ void loop() {
         if (input_power_history.size() >= DEQUE_SIZE) {
             input_power_history.pop_front();
         }
-        input_power_history.push_back(inverter.getGridPower());
+        input_power_history.push_back(inverter.getPlantPower());
 
         for (int val: input_power_history) {
             Serial.print(val);
