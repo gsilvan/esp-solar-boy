@@ -47,7 +47,7 @@ void Inverter::printy() const {
     Serial.printf("Battery: %d\n", this->getBatteryStateOfCharge());
     Serial.printf("Battery charge power: %d\n", this->getBatteryChargePower());
     Serial.printf("Grid power: %d\n", this->getGridPower());
-    Serial.printf("Power meter status: %s\nd", this->getMeterStatus().c_str());
+    Serial.printf("Power meter status: %s\n", this->getMeterStatus().c_str());
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
 }
 
