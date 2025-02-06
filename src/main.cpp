@@ -5,13 +5,13 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
-#include <ModbusIP_ESP8266.h>
 #include <Preferences.h>
 #include <WiFiManager.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 
+#include "inverter.h"
 #include "version.h"
 #include "templates.h"
 
@@ -22,24 +22,12 @@ const char *dns_name = "solarboy";
 Preferences prefs;
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
-ModbusIP mb;
-
-/* MODBUS REGISTERS */
-uint16_t RUNNING_STATUS = 37000;
-uint16_t CHARGE_DISCHARGE = 37001;
-uint16_t SOC = 37004;
-uint16_t INPUT_POWER = 32064;
-
-/* TIMERS */
-const uint64_t interval = 2000;
-uint64_t previousMillis = 0;
-uint64_t last_deque_update = 0;
-uint64_t last_cycle_start = 0;
 
 /* DEQUE */
 std::deque<int> input_power_history;
 std::deque<int> battery_charge_history;
-const uint16_t DEQUE_SIZE = 60;  // use a multiple of 60
+const uint16_t DEQUE_SIZE = 30;  // use a multiple of 60
+uint64_t last_deque_update = 0;
 
 uint16_t settings_battery_charge;
 uint32_t settings_input_power;
@@ -49,16 +37,7 @@ uint8_t settings_switch_cycle_minutes;
 /* PINS */
 bool is_pin0_on = false;
 
-struct Sun2000 {
-    u_int16_t device_state = 0;
-    int32_t input_power = 0;
-    u_int16_t battery_state_of_capacity = 0;
-    int32_t battery_charging_power = 0;
-    IPAddress ip;
-    in_port_t port = 502;
-};
-
-Sun2000 inverter;
+Inverter inverter;
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
@@ -66,9 +45,9 @@ u_int64_t lastInverterDataTimestamp = 0;
 
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
-    html.replace("%BATTERYCHARGE%", String(inverter.battery_state_of_capacity / 10));
-    html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
-    html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
+    html.replace("%BATTERYCHARGE%", String(inverter.getBatteryStateOfCharge()));
+    html.replace("%CHARGE%", String(inverter.getBatteryChargePower()));
+    html.replace("%INPUTPOWER%", String(inverter.getGridPower()));
     html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
     html.replace("%PIN_0_CLASS%", is_pin0_on ? String("pin-active") : String("pin-inactive"));
     html.replace("%VERSION%", String(FIRMWARE_VERSION));
@@ -77,7 +56,7 @@ void handleIndex() {
 
 void handleSettings() {
     String html(reinterpret_cast<const char *>(settingsHtmlTemplate));
-    html.replace("%IPADDRESS%", inverter.ip.toString());
+    html.replace("%IPADDRESS%", inverter.ipAddress.toString());
     html.replace("%BATTERYCHARGE%", String(settings_battery_charge));
     html.replace("%PIN0INPUTPOWER%", String(settings_input_power));
     html.replace("%PIN0TIMER%", String(settings_monitoring_window_minutes));
@@ -100,8 +79,8 @@ void handlePostSettings() {
         prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
 
         String new_inverter_ip_str = httpServer.arg("settings-inverter-ip");
-        if (inverter.ip.fromString(new_inverter_ip_str)) {
-            prefs.putString("settings-inverter-ip", inverter.ip.toString());
+        if (inverter.ipAddress.fromString(new_inverter_ip_str)) {
+            prefs.putString("settings-inverter-ip", inverter.ipAddress.toString());
         }
 
         httpServer.sendHeader("Location", "/settings", true);
@@ -147,7 +126,10 @@ void setup() {
 
     /* Inverter Settings */
     String inverter_ip_str = prefs.getString("settings-inverter-ip", "192.168.142.20");
-    inverter.ip.fromString(inverter_ip_str);
+    inverter.ipAddress.fromString(inverter_ip_str);
+
+    IPAddress tempIpAdress;
+    tempIpAdress.fromString(inverter_ip_str);
 
     pinMode(D0, OUTPUT);
 
@@ -166,7 +148,7 @@ void setup() {
         Serial.println("http://" + String(dns_name) + ".local/");
     }
 
-    mb.client();
+    inverter.begin(tempIpAdress);
 
     httpServer.on("/", handleIndex);
     httpServer.on("/settings", HTTP_GET, handleSettings);
@@ -184,47 +166,16 @@ void loop() {
     httpServer.handleClient();
     MDNS.update();
 
-    uint64_t currentMillis = millis();
-    if (currentMillis - previousMillis >= interval) {
-        previousMillis = millis();
-        if (mb.isConnected(inverter.ip)) {
-            mb.readHreg(inverter.ip, SOC, &inverter.battery_state_of_capacity, 1, nullptr, 1);
-            delay(100);
-            mb.task();
-
-            mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1);
-            delay(100);
-            mb.task();
-
-            mb.readHreg(inverter.ip, INPUT_POWER, (uint16_t *) &inverter.input_power, 2, nullptr, 1);
-            delay(100);
-            mb.task();
-
-            lastInverterDataTimestamp = timeClient.getEpochTime();
-        } else {
-            mb.connect(inverter.ip);
-        }
-
-        currentMillis = millis();
-        if (currentMillis - last_cycle_start >= settings_monitoring_window_minutes * 60 * 1000) {
-            is_pin0_on = switch_pin(D0);
-            if (is_pin0_on) {
-                last_cycle_start = millis();
-            }
-        }
-
-        Serial.printf("Battery: %d\n", inverter.battery_state_of_capacity / 10);
-        Serial.printf("Charge: %d\n",
-                      (inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16));
-        Serial.printf("Input Power: %d\n", (inverter.input_power >> 16) | (inverter.input_power << 16));
+    if (inverter.update()) {
+        lastInverterDataTimestamp = timeClient.getEpochTime();
     }
 
-    currentMillis = millis();
+    uint64_t currentMillis = millis();
     if (currentMillis - last_deque_update >= (settings_monitoring_window_minutes * 60 * 1000 / DEQUE_SIZE)) {
         if (input_power_history.size() >= DEQUE_SIZE) {
             input_power_history.pop_front();
         }
-        input_power_history.push_back((inverter.input_power >> 16) | (inverter.input_power << 16));
+        input_power_history.push_back(inverter.getGridPower());
 
         for (int val: input_power_history) {
             Serial.print(val);
@@ -235,7 +186,7 @@ void loop() {
         if (battery_charge_history.size() >= DEQUE_SIZE) {
             battery_charge_history.pop_front();
         }
-        battery_charge_history.push_back(inverter.battery_state_of_capacity / 10);
+        battery_charge_history.push_back(inverter.getBatteryStateOfCharge());
 
         for (int val: battery_charge_history) {
             Serial.print(val);
