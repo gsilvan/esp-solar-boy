@@ -49,20 +49,10 @@ uint8_t settings_switch_cycle_minutes;
 /* PINS */
 bool is_pin0_on = false;
 
-/* INVERTERS */
-enum Sun2000BatteryState {
-    offline = 1,
-    stand_by = 2,
-    running = 3,
-    fault = 4,
-    sleep_mode = 5,
-};
-
 struct Sun2000 {
     u_int16_t device_state = 0;
     int32_t input_power = 0;
     u_int16_t battery_state_of_capacity = 0;
-    Sun2000BatteryState battery_state = offline;
     int32_t battery_charging_power = 0;
     IPAddress ip;
     in_port_t port = 502;
@@ -74,20 +64,8 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
-String batteryStateStr (Sun2000BatteryState state) {
-    switch (state) {
-        case offline: return "offline";
-        case stand_by: return "stand-by";
-        case running: return "running";
-        case fault: return "fault";
-        case sleep_mode: return "sleeping";
-    }
-    return "";
-}
-
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
-    html.replace("%STATE%", batteryStateStr(inverter.battery_state));
     html.replace("%BATTERYCHARGE%", String(inverter.battery_state_of_capacity / 10));
     html.replace("%CHARGE%", String((inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16)));
     html.replace("%INPUTPOWER%", String((inverter.input_power >> 16) | (inverter.input_power << 16)));
@@ -213,10 +191,6 @@ void loop() {
             delay(100);
             mb.task();
 
-            mb.readHreg(inverter.ip, RUNNING_STATUS, (uint16_t *) &inverter.battery_state, 1, nullptr, 1);
-            delay(100);
-            mb.task();
-
             mb.readHreg(inverter.ip, CHARGE_DISCHARGE, (uint16_t *) &inverter.battery_charging_power, 2, nullptr, 1);
             delay(100);
             mb.task();
@@ -239,7 +213,6 @@ void loop() {
         }
 
         Serial.printf("Battery: %d\n", inverter.battery_state_of_capacity / 10);
-        Serial.printf("Battery state: %d\n", inverter.battery_state);
         Serial.printf("Charge: %d\n",
                       (inverter.battery_charging_power >> 16) | (inverter.battery_charging_power << 16));
         Serial.printf("Input Power: %d\n", (inverter.input_power >> 16) | (inverter.input_power << 16));
