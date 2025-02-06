@@ -57,6 +57,7 @@ static const char indexHtmlTemplate[] PROGMEM =
                         Firmware
                     </a>
                 </li>
+                <li><a class="flex items-center px-6 py-3 text-gray-700 text-xs" href="https://github.com/gsilvan/esp-solar-boy/releases">%VERSION%</a></li>
             </ul>
         </nav>
 
