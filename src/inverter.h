@@ -26,6 +26,8 @@ public:
 
     [[nodiscard]] String getMeterStatus() const;
 
+    [[nodiscard]] String getState1() const;
+
     IPAddress ipAddress;
     in_port_t port = 502;
 
@@ -41,6 +43,7 @@ private:
     int32_t _gridPower = 0;
     int32_t _powerMeterActivePower = 0;
     uint16_t _meterStatus = 0;
+    uint16_t _state1 = 0;
 };
 
 #endif //ESP_SOLAR_BOY_INVERTER_H

@@ -22,6 +22,7 @@ bool Inverter::update() {
             this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_gridPower, 2, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatus, 1, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePower, 2, nullptr, 1);
+            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1, 1, nullptr, 1);
             this->_lastUpdate = millis();
         }
         this->_modbus.task();
@@ -49,6 +50,8 @@ void Inverter::printy() const {
     Serial.printf("Grid power: %d\n", this->getGridPower());
     Serial.printf("Power meter status: %s\n", this->getMeterStatus().c_str());
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
+    Serial.printf("State1: %s\n", this->getState1().c_str());
+    Serial.printf("State1 RAW: %d\n", this->_state1);
 }
 
 int32_t Inverter::getPowerMeterActivePower() const {
@@ -61,6 +64,33 @@ String Inverter::getMeterStatus() const {
             return "offline";
         case 1:
             return "normal";
+        default:
+            return "";
+    }
+}
+
+String Inverter::getState1() const {
+    switch (this->_state1) {
+        case 0b0000000001:
+            return "standby";
+        case 0b0000000010:
+            return "grid-connected";
+        case 0b0000000100:
+            return "grid-connected normally";
+        case 0b0000001000:
+            return "grid connection with derating due to power rationing";
+        case 0b0000010000:
+            return "grid connection with derating due to internal causes of the solar inverter";
+        case 0b0000100000:
+            return "normal stop";
+        case 0b0001000000:
+            return "stop due to faults";
+        case 0b0010000000:
+            return "stop due to power rationing";
+        case 0b0100000000:
+            return "shutdown";
+        case 0b1000000000:
+            return "spot check";
         default:
             return "";
     }
