@@ -73,7 +73,7 @@ static const char indexHtmlTemplate[] PROGMEM =
             </header>
             <div class="p-6">
                 <h2 class="text-3xl font-semibold text-gray-800 mb-6">Dashboard</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                     <!-- Sample Card 1 -->
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mr-3">Pin state</h3>
@@ -95,6 +95,10 @@ static const char indexHtmlTemplate[] PROGMEM =
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <h3 class="text-xl font-semibold text-gray-700 mb-2">Plant Power</h3>
                         <p class="text-3xl font-bold text-yellow-600">%PLANTPOWER% W</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Grid feed</h3>
+                        <p class="text-3xl font-bold text-yellow-600">%ACTIVEPOWER% W</p>
                     </div>
                 </div>
                 <div class="py-3">

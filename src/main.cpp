@@ -50,6 +50,7 @@ void handleIndex() {
     html.replace("%PLANTPOWER%", String(inverter.getPlantPower()));
     html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
     html.replace("%PIN_0_CLASS%", is_pin0_on ? String("pin-active") : String("pin-inactive"));
+    html.replace("%ACTIVEPOWER%", String(inverter.getPowerMeterActivePower()));
     html.replace("%VERSION%", String(FIRMWARE_VERSION));
     httpServer.send(200, "text/html", html);
 }
