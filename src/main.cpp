@@ -176,7 +176,7 @@ void loop() {
         if (input_power_history.size() >= DEQUE_SIZE) {
             input_power_history.pop_front();
         }
-        input_power_history.push_back(inverter.getPlantPower());
+        input_power_history.push_back(inverter.getPowerMeterActivePower());
 
         for (int val: input_power_history) {
             Serial.print(val);
