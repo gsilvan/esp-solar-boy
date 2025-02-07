@@ -88,7 +88,7 @@ static const char indexHtmlTemplate[] PROGMEM =
                     </div>
                     <!-- Sample Card 3 -->
                     <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Charge</h3>
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2">Battery charge rate</h3>
                         <p class="text-3xl font-bold text-yellow-600">%CHARGE% W</p>
                     </div>
                     <!-- Sample Card 4 -->
