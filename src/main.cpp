@@ -14,6 +14,7 @@
 #include "inverter.h"
 #include "version.h"
 #include "templates.h"
+#include "data_collector.h"
 
 WiFiManager wifiManager;
 
@@ -33,6 +34,8 @@ uint16_t settings_battery_charge;
 uint32_t settings_input_power;
 uint8_t settings_monitoring_window_minutes;
 uint8_t settings_switch_cycle_minutes;
+bool settings_enable_data_collection;
+String settings_data_collection_url;
 
 /* PINS */
 bool is_pin0_on = false;
@@ -42,6 +45,8 @@ Inverter inverter;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
+
+DataCollector dc;
 
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
@@ -62,6 +67,8 @@ void handleSettings() {
     html.replace("%PIN0INPUTPOWER%", String(settings_input_power));
     html.replace("%PIN0TIMER%", String(settings_monitoring_window_minutes));
     html.replace("%PIN0CYCLE%", String(settings_switch_cycle_minutes));
+    html.replace("%DATACOLLECTION%", settings_enable_data_collection ? "checked" : "");
+    html.replace("%DATACOLLECTIONURL%", String(settings_data_collection_url));
     httpServer.send(200, "text/html", html);
 }
 
@@ -78,6 +85,13 @@ void handlePostSettings() {
 
         settings_switch_cycle_minutes = (u_int8_t) httpServer.arg("pin-0-cycle").toInt();
         prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
+
+        settings_enable_data_collection = httpServer.hasArg("enable-data-collection");
+        prefs.putBool("settings-enable-data-collection", settings_enable_data_collection);
+
+        settings_data_collection_url = (String) httpServer.arg("data-collection-url");
+        prefs.putString("settings-data-collection-url", settings_data_collection_url);
+        dc.url = settings_data_collection_url;
 
         String new_inverter_ip_str = httpServer.arg("settings-inverter-ip");
         if (inverter.ipAddress.fromString(new_inverter_ip_str)) {
@@ -124,6 +138,8 @@ void setup() {
     settings_input_power = prefs.getUInt("settings-p0-input-power", 1500);
     settings_monitoring_window_minutes = prefs.getUShort("settings-p0-monitoring-window", 5);
     settings_switch_cycle_minutes = prefs.getUShort("settings-p0-switch-cycle", 10);
+    settings_enable_data_collection = prefs.getBool("settings-enable-data-collection", false);
+    settings_data_collection_url = prefs.getString("settings-data-collection-url", "");
 
     /* Inverter Settings */
     String inverter_ip_str = prefs.getString("settings-inverter-ip", "192.168.142.20");
@@ -150,6 +166,7 @@ void setup() {
     }
 
     inverter.begin(tempIpAdress);
+    dc.setup(&inverter, settings_data_collection_url, "dev-device");
 
     httpServer.on("/", handleIndex);
     httpServer.on("/settings", HTTP_GET, handleSettings);
@@ -203,5 +220,10 @@ void loop() {
     if (currentMillis - last_switch_check >= (settings_switch_cycle_minutes * 60 * 1000)) {
         last_switch_check = millis();
         is_pin0_on = switch_pin(D0);
+    }
+
+    if (settings_enable_data_collection) {
+        // Collect data with user consent
+        dc.loop();
     }
 }

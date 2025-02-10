@@ -162,6 +162,10 @@ static const char settingsHtmlTemplate[] PROGMEM =
         <input class="input" type="password" id="settings-password" name="settings-password" placeholder="Password">
         <label for="settings-inverter-ip">Inverter IPv4:</label>
         <input class="input" type="text" id="settings-inverter-ip" name="settings-inverter-ip" value="%IPADDRESS%">
+        <label for="enable-data-collection">Telemetry:</label>
+        <input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" %DATACOLLECTION%>
+        <label for="data-collection-url">URL:</label>
+        <input class="input" type="text" id="data-collection-url" name="data-collection-url" value="%DATACOLLECTIONURL%">
         <button>Save</button>
         <h2>PINs</h2>
         <h3>PIN_0</h3>
