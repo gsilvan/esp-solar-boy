@@ -23,9 +23,9 @@ bool Inverter::update() {
             this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatus, 1, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePower, 2, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1, 1, nullptr, 1);
-            this->_lastUpdate = millis();
         }
         this->_modbus.task();
+        this->_lastUpdate = millis();
         this->printy();
         return true;
     }
