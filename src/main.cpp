@@ -15,6 +15,7 @@
 #include "version.h"
 #include "templates.h"
 #include "data_collector.h"
+#include "relay.h"
 
 WiFiManager wifiManager;
 
@@ -46,6 +47,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
+RelayManager relayManager;
 DataCollector dc;
 
 void handleIndex() {
@@ -177,6 +179,10 @@ void setup() {
 
     httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
+
+    relayManager.setup(&inverter, httpServer);
+    auto r1 = Relay(1);
+    relayManager.addRelay(r1);
 }
 
 void loop() {
@@ -187,6 +193,8 @@ void loop() {
     if (inverter.update()) {
         lastInverterDataTimestamp = timeClient.getEpochTime();
     }
+
+    relayManager.update();
 
     uint64_t currentMillis = millis();
     if (currentMillis - last_deque_update >= (settings_monitoring_window_minutes * 60 * 1000 / DEQUE_SIZE)) {
