@@ -11,7 +11,7 @@
 
 class Relay {
 public:
-    Relay(uint8_t pin) : _pin(pin) {};
+    Relay(uint8_t pin);
 
     ~Relay() = default;
 

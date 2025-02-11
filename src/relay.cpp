@@ -110,7 +110,12 @@ void RelayManager::_printy() {
     Serial.println();
 }
 
+Relay::Relay(uint8_t pin) {
+    this->_pin = pin;
+    pinMode(this->_pin, OUTPUT);
+}
+
 void Relay::update() {
-/*    uint8_t _pinMode = this->_isOn ? HIGH : LOW;
-    pinMode(this->_pin, _pinMode);*/
+    uint8_t _pinMode = this->_isOn ? HIGH : LOW;
+    digitalWrite(this->_pin, _pinMode);
 }
