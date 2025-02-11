@@ -203,22 +203,10 @@ void loop() {
         }
         input_power_history.push_back(inverter.getPowerMeterActivePower());
 
-        for (int val: input_power_history) {
-            Serial.print(val);
-            Serial.print(" ");
-        }
-        Serial.println();
-
         if (battery_charge_history.size() >= DEQUE_SIZE) {
             battery_charge_history.pop_front();
         }
         battery_charge_history.push_back(inverter.getBatteryStateOfCharge());
-
-        for (int val: battery_charge_history) {
-            Serial.print(val);
-            Serial.print(" ");
-        }
-        Serial.println();
 
         last_deque_update = millis();
     }

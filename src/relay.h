@@ -50,6 +50,8 @@ private:
     void _addBatteryValue(uint16_t value);
 
     void _addActivePowerValue(int32_t value);
+
+    void _printy();
 };
 
 #endif //ESP_SOLAR_BOY_RELAYMANAGER_H

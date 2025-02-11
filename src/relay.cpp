@@ -20,6 +20,7 @@ void RelayManager::update() {
         this->_addBatteryValue(this->_inverter->getBatteryStateOfCharge());
         this->_addActivePowerValue(this->_inverter->getPowerMeterActivePower());
         this->_lastBufferUpdate = millis();
+        this->_printy();
     }
 
     for (auto r: this->_relays) {
@@ -96,7 +97,20 @@ int32_t RelayManager::_getMeanPowerMeterActivePower() {
     return sum / (int32_t) this->_powerMeterActivePower.size();
 }
 
+void RelayManager::_printy() {
+    for (auto val: this->_powerMeterActivePower) {
+        Serial.print(val);
+        Serial.print(" ");
+    }
+    Serial.println();
+    for (auto val: this->_batteryStateOfCharge) {
+        Serial.print(val);
+        Serial.print(" ");
+    }
+    Serial.println();
+}
+
 void Relay::update() {
-    uint8_t _pinMode = this->_isOn ? HIGH : LOW;
-    pinMode(this->_pin, _pinMode);
+/*    uint8_t _pinMode = this->_isOn ? HIGH : LOW;
+    pinMode(this->_pin, _pinMode);*/
 }
