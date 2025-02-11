@@ -36,7 +36,7 @@ public:
 
 private:
     const uint64_t _maxBufferLength = 30;
-    const uint64_t _bufferUpdateInterval = 30000;
+    const uint64_t _bufferUpdateInterval = 10000;
     uint64_t _lastBufferUpdate = 0;
     Inverter *_inverter;
     std::deque<uint16_t> _batteryStateOfCharge;
