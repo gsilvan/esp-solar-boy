@@ -48,6 +48,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 RelayManager relayManager;
+auto r1 = Relay(1);
 DataCollector dc;
 
 void handleIndex() {
@@ -181,7 +182,6 @@ void setup() {
     Serial.println("HTTP server started");
 
     relayManager.setup(&inverter, httpServer);
-    auto r1 = Relay(1);
     relayManager.addRelay(r1);
 }
 
