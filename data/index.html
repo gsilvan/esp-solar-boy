@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP8266 Dashboard</title>
+    <title>Dashboard - ESP Solar Boy</title>
     <link rel="stylesheet" href="style.css">
     <script src="/htmx.min.js"></script>
 </head>
 <body>
 <main>
-    <h2>ESP8266 Sensor Dashboard</h2>
+    <h1>ESP Solar Boy</h1>
     <nav>
         <a href="/">Home</a>
         <a href="/settings">Settings</a>
         <a href="/update">Firmware</a>
     </nav>
+    <h2>Dashboard</h2>
     <p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> %</p>
     <p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
     <p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
