@@ -68,6 +68,16 @@ void handleRoot() {
     file.close();
 }
 
+void handleStyle() {
+    File file = LittleFS.open("/style.css", "r");
+    if (!file) {
+        httpServer.send(404, "text/plain", "File Not Found");
+        return;
+    }
+    httpServer.streamFile(file, "text/css");
+    file.close();
+}
+
 void handleHTMX() {
     File file = LittleFS.open("/htmx.min.js", "r");
     if (!file) {
@@ -222,6 +232,7 @@ void setup() {
 
     httpServer.on("/", HTTP_GET, handleRoot);
     httpServer.on("/htmx.min.js", HTTP_GET, handleHTMX);
+    httpServer.on("/style.css", HTTP_GET, handleStyle);
     httpServer.on("/data/battery", HTTP_GET, handleBattery);
     httpServer.on("/data/batteryChargeRate", HTTP_GET, handleBatteryChargeRate);
     httpServer.on("/data/plantPower", HTTP_GET, handlePlantPower);
