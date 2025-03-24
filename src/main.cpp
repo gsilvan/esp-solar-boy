@@ -69,21 +69,24 @@ void handleHTMX() {
     file.close();
 }
 
-void handleSensor() {
-    double sensorValue = (double) random(200, 500) / 10.0;  // Simulating a new sensor value
-    httpServer.send(200, "text/plain", String(sensorValue));
+void handleBattery() {
+    httpServer.send(200, "text/plain", String(inverter.getBatteryStateOfCharge()));
 }
 
-void handleIndex() {
-    String html(reinterpret_cast<const char *>(indexHtmlTemplate));
-    html.replace("%BATTERYSOC%", String(inverter.getBatteryStateOfCharge()));
-    html.replace("%CHARGE%", String(inverter.getBatteryChargePower()));
-    html.replace("%PLANTPOWER%", String(inverter.getPlantPower()));
-    html.replace("%UNIXTIMESTAMP%", String(lastInverterDataTimestamp));
-    html.replace("%PIN_0_CLASS%", is_pin0_on ? String("pin-active") : String("pin-inactive"));
-    html.replace("%ACTIVEPOWER%", String(inverter.getPowerMeterActivePower()));
-    html.replace("%VERSION%", String(FIRMWARE_VERSION));
-    httpServer.send(200, "text/html", html);
+void handleBatteryChargeRate() {
+    httpServer.send(200, "text/plain", String(inverter.getBatteryChargePower()));
+}
+
+void handlePlantPower() {
+    httpServer.send(200, "text/plain", String(inverter.getPlantPower()));
+}
+
+void handlePowerMeterActivePower() {
+    httpServer.send(200, "text/plain", String(inverter.getPowerMeterActivePower()));
+}
+
+void handleFirmwareVersion() {
+    httpServer.send(200, "text/plain", String(FIRMWARE_VERSION));
 }
 
 void handleSettings() {
@@ -199,10 +202,13 @@ void setup() {
         return;
     }
 
-    httpServer.on("/", handleIndex);
-    httpServer.on("/index2", HTTP_GET, handleRoot);
+    httpServer.on("/", HTTP_GET, handleRoot);
     httpServer.on("/htmx.min.js", HTTP_GET, handleHTMX);
-    httpServer.on("/sensor", HTTP_GET, handleSensor);
+    httpServer.on("/data/battery", HTTP_GET, handleBattery);
+    httpServer.on("/data/batteryChargeRate", HTTP_GET, handleBatteryChargeRate);
+    httpServer.on("/data/plantPower", HTTP_GET, handlePlantPower);
+    httpServer.on("/data/powerMeterActivePower", HTTP_GET, handlePowerMeterActivePower);
+    httpServer.on("/data/firmwareVersion", HTTP_GET, handleFirmwareVersion);
     httpServer.on("/settings", HTTP_GET, handleSettings);
     httpServer.on("/settings", HTTP_POST, handlePostSettings);
     httpServer.onNotFound(handleNotFound);
