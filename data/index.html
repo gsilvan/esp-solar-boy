@@ -5,13 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP8266 Dashboard</title>
     <script src="/htmx.min.js"></script>
+    <style>
+        nav {
+            display: flex;
+            column-gap: 8px;
+        }
+    </style>
 </head>
 <body>
-<h2>ESP8266 Sensor Dashboard</h2>
-<p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
-<p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
-<p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
-<p>Power meter active power: <span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+<main>
+    <h2>ESP8266 Sensor Dashboard</h2>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/settings">Settings</a>
+        <a href="/update">Firmware</a>
+    </nav>
+    <p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+    <p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+    <p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+    <p>Power meter active power: <span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+</main>
 <footer>
     <a href="https://github.com/gsilvan/esp-solar-boy/releases" hx-get="/data/firmwareVersion" hx-trigger="load" hx-swap="innerHTML"></a>
 </footer>
