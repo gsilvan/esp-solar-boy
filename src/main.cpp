@@ -14,7 +14,6 @@
 
 #include "inverter.h"
 #include "version.h"
-#include "templates.h"
 #include "data_collector.h"
 
 WiFiManager wifiManager;
@@ -48,6 +47,16 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
+
+String processTemplate(const String &templateContent, const std::map<String, String> &variables) {
+    String result = templateContent;
+
+    for (const auto &pair: variables) {
+        result.replace("{{" + pair.first + "}}", pair.second);
+    }
+
+    return result;
+}
 
 void handleRoot() {
     File file = LittleFS.open("/index.html", "r");
@@ -90,14 +99,23 @@ void handleFirmwareVersion() {
 }
 
 void handleSettings() {
-    String html(reinterpret_cast<const char *>(settingsHtmlTemplate));
-    html.replace("%IPADDRESS%", inverter.ipAddress.toString());
-    html.replace("%BATTERYCHARGE%", String(settings_battery_charge));
-    html.replace("%PIN0INPUTPOWER%", String(settings_input_power));
-    html.replace("%PIN0TIMER%", String(settings_monitoring_window_minutes));
-    html.replace("%PIN0CYCLE%", String(settings_switch_cycle_minutes));
-    html.replace("%DATACOLLECTION%", settings_enable_data_collection ? "checked" : "");
-    html.replace("%DATACOLLECTIONURL%", String(settings_data_collection_url));
+    File file = LittleFS.open("/settings.html", "r");
+    if (!file) {
+        httpServer.send(404, "text/plain", "File Not Found");
+        return;
+    }
+    String templateContent = file.readString();
+    file.close();
+    std::map<String, String> variables = {
+            {"IP_ADDRESS",          inverter.ipAddress.toString()},
+            {"BATTERY_CHARGE",      String(settings_battery_charge)},
+            {"PIN_0_INPUT_POWER",   String(settings_input_power)},
+            {"PIN_0_TIMER",         String(settings_monitoring_window_minutes)},
+            {"PIN_0_CYCLE",         String(settings_switch_cycle_minutes)},
+            {"DATA_COLLECTION",     settings_enable_data_collection ? "checked" : ""},
+            {"DATA_COLLECTION_URL", String(settings_data_collection_url)},
+    };
+    String html = processTemplate(templateContent, variables);
     httpServer.send(200, "text/html", html);
 }
 

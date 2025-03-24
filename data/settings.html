@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+</head>
+<body>
+<main>
+    <h2>ESP8266 Settings</h2>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/settings">Settings</a>
+        <a href="/update">Firmware</a>
+    </nav>
+
+    <form method="post">
+        <div style="max-width: 450px;">
+            <h2>Device</h2>
+            <div>
+                <label for="settings-inverter-ip">Inverter IPv4:</label>
+                <input class="input" type="text" id="settings-inverter-ip" name="settings-inverter-ip" value="{{IP_ADDRESS}}">
+            </div>
+            <div>
+                <label for="enable-data-collection">Telemetry:</label>
+                <input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" {{DATA_COLLECTION}}>
+            </div>
+            <div>
+                <label for="data-collection-url">URL:</label>
+                <input class="input" type="text" id="data-collection-url" name="data-collection-url"
+                       value="{{DATA_COLLECTION_URL}}">
+            </div>
+            <button>Save</button>
+            <h2>PINs</h2>
+            <h3>PIN_0</h3>
+            <div>
+                <label for="pin-0-battery">Battery charge (%):</label>
+                <input class="input" type="number" min="0" max="100" step="1" id="pin-0-battery" name="pin-0-battery"
+                       value="{{BATTERY_CHARGE}}">
+            </div>
+            <div>
+                <label for="pin-0-input-power">Power overflow (Watts):</label>
+                <input class="input" type="number" min="100" step="100" id="pin-0-input-power" name="pin-0-input-power"
+                       value="{{PIN_0_INPUT_POWER}}">
+            </div>
+            <div>
+                <label for="pin-0-timer">Monitoring window (minutes):</label>
+                <input class="input" type="number" min="0" max="60" step="1" id="pin-0-timer" name="pin-0-timer"
+                       value="{{PIN_0_TIMER}}">
+            </div>
+            <div>
+                <label for="pin-0-cycle">Switch cycle (minutes):</label>
+                <input class="input" type="number" min="0" max="60" step="1" id="pin-0-cycle" name="pin-0-cycle"
+                       value="{{PIN_0_CYCLE}}">
+            </div>
+        </div>
+        <button>Save</button>
+    </form>
+</main>
+</body>
+</html>
