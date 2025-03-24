@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP8266 Dashboard</title>
+    <script src="/htmx.min.js"></script>
+</head>
+<body>
+<h2>ESP8266 Sensor Dashboard</h2>
+<p>Current Sensor Value: <span id="sensor-value" hx-get="/sensor" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+</body>
+</html>

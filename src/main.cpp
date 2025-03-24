@@ -10,6 +10,7 @@
 #include <ESP8266HTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
+#include <LittleFS.h>
 
 #include "inverter.h"
 #include "version.h"
@@ -47,6 +48,31 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
+
+void handleRoot() {
+    File file = LittleFS.open("/index.html", "r");
+    if (!file) {
+        httpServer.send(404, "text/plain", "File Not Found");
+        return;
+    }
+    httpServer.streamFile(file, "text/html");
+    file.close();
+}
+
+void handleHTMX() {
+    File file = LittleFS.open("/htmx.min.js", "r");
+    if (!file) {
+        httpServer.send(404, "text/plain", "File Not Found");
+        return;
+    }
+    httpServer.streamFile(file, "application/javascript");
+    file.close();
+}
+
+void handleSensor() {
+    double sensorValue = (double) random(200, 500) / 10.0;  // Simulating a new sensor value
+    httpServer.send(200, "text/plain", String(sensorValue));
+}
 
 void handleIndex() {
     String html(reinterpret_cast<const char *>(indexHtmlTemplate));
@@ -168,7 +194,15 @@ void setup() {
     inverter.begin(tempIpAdress);
     dc.setup(&inverter, settings_data_collection_url, "dev-device");
 
+    if (!LittleFS.begin()) {
+        Serial.println("LittleFS Mount Failed");
+        return;
+    }
+
     httpServer.on("/", handleIndex);
+    httpServer.on("/index2", HTTP_GET, handleRoot);
+    httpServer.on("/htmx.min.js", HTTP_GET, handleHTMX);
+    httpServer.on("/sensor", HTTP_GET, handleSensor);
     httpServer.on("/settings", HTTP_GET, handleSettings);
     httpServer.on("/settings", HTTP_POST, handlePostSettings);
     httpServer.onNotFound(handleNotFound);
