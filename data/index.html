@@ -10,6 +10,9 @@
             display: flex;
             column-gap: 8px;
         }
+        footer {
+            border-top: 1px solid gray;
+        }
     </style>
 </head>
 <body>
@@ -26,7 +29,7 @@
     <p>Power meter active power: <span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
 </main>
 <footer>
-    <a href="https://github.com/gsilvan/esp-solar-boy/releases" hx-get="/data/firmwareVersion" hx-trigger="load" hx-swap="innerHTML"></a>
+    <span>Version: </span><a href="https://github.com/gsilvan/esp-solar-boy/releases" hx-get="/data/firmwareVersion" hx-trigger="load" hx-swap="innerHTML"></a>
 </footer>
 </body>
 </html>
