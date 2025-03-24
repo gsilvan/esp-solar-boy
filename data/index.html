@@ -20,10 +20,10 @@
         <a href="/settings">Settings</a>
         <a href="/update">Firmware</a>
     </nav>
-    <p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
-    <p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
-    <p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
-    <p>Power meter active power: <span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">Loading...</span></p>
+    <p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> %</p>
+    <p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
+    <p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
+    <p>Power meter active power: <span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
 </main>
 <footer>
     <a href="https://github.com/gsilvan/esp-solar-boy/releases" hx-get="/data/firmwareVersion" hx-trigger="load" hx-swap="innerHTML"></a>
