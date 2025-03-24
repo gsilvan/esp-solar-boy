@@ -1,3 +1,6 @@
+body {
+    font-family: sans-serif;
+}
 nav {
     display: flex;
     column-gap: 8px;
