@@ -16,6 +16,24 @@
         <a href="/update">Firmware</a>
     </nav>
     <h2>Dashboard</h2>
+    <div class="pins">
+        <div id="pin0">
+            <span>Pin 0</span>
+            <div class="pin-indicator"
+                 hx-get="/data/pin0indicator"
+                 hx-trigger="load, every 10s"
+                 hx-swap="outerHTML">
+            </div>
+        </div>
+        <div id="pin1">
+            <span>Pin 1</span>
+            <div class="pin-indicator"></div>
+        </div>
+        <div id="pin2">
+            <span>Pin 2</span>
+            <div class="pin-indicator"></div>
+        </div>
+    </div>
     <p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> %</p>
     <p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
     <p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>

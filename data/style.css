@@ -28,3 +28,16 @@ input[type="checkbox"] {
     width: auto;
     margin-left: 6px;
 }
+.pins {
+    display: flex;
+    column-gap: 20px;
+}
+.pin-indicator {
+    width: 23px;
+    height: 23px;
+    border-radius: 50px;
+    background-color: gray;
+}
+.pin-active {
+    background-color: seagreen;
+}

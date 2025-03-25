@@ -169,6 +169,14 @@ void handlePostSettings() {
 
 void handleNotFound() { httpServer.send(404, "text/html", "<h1>404: Not found</h1>"); }
 
+void handlePin0Indicator() {
+    String pinIndicator = is_pin0_on
+                          ? R"(<div class="pin-indicator pin-active" hx-get="/data/pin0indicator" hx-trigger="load, every 10s" hx-swap="outerHTML"></div>)"
+                          : R"(<div class="pin-indicator" hx-get="/data/pin0indicator" hx-trigger="load, every 10s" hx-swap="outerHTML"></div>)";
+
+    httpServer.send(200, "text/html", pinIndicator);
+}
+
 bool switch_pin(uint8_t pin) {
     bool is_on;
     auto min_battery = *std::min_element(battery_charge_history.begin(), battery_charge_history.end());
@@ -247,6 +255,7 @@ void setup() {
     httpServer.on("/data/plantPower", HTTP_GET, handlePlantPower);
     httpServer.on("/data/powerMeterActivePower", HTTP_GET, handlePowerMeterActivePower);
     httpServer.on("/data/firmwareVersion", HTTP_GET, handleFirmwareVersion);
+    httpServer.on("/data/pin0indicator", HTTP_GET, handlePin0Indicator);
     httpServer.on("/settings", HTTP_GET, handleSettings);
     httpServer.on("/settings", HTTP_POST, handlePostSettings);
     httpServer.onNotFound(handleNotFound);
