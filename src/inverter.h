@@ -1,3 +1,4 @@
+#include <deque>
 #include <Arduino.h>
 #include <IPAddress.h>
 #include <ModbusIP_ESP8266.h>
@@ -28,14 +29,18 @@ public:
 
     [[nodiscard]] String getState1() const;
 
+    void printy();
+
+    int minBatteryStateOfCharge();
+
+    int meanPowerMeterActivePower();
+
     IPAddress ipAddress;
     in_port_t port = 502;
-
-    void printy() const;
-
-
+    const uint16_t DEQUE_SIZE = 360;
+    const uint64_t INVERTER_UPDATE_INTERVAL = 10000;
+    const uint64_t HISTORY_UPDATE_INTERVAL = 10000;
 private:
-    const uint64_t _updateInterval = 10000;
     uint64_t _lastUpdate = 0;
     ModbusIP _modbus;
     uint16_t _batteryStateOfCharge = 0;
@@ -44,6 +49,15 @@ private:
     int32_t _powerMeterActivePower = 0;
     uint16_t _meterStatus = 0;
     uint16_t _state1 = 0;
+    uint64_t _lastHistoryUpdate = 0;
+    std::deque<int> _powerMeterActivePowerHistory;
+    std::deque<int> _batteryStateOfChargeHistory;
+
+    void _addToDeque(int value, std::deque<int> *dq);
+
+    void _printDeque(std::deque<int> *dq);
+
+    void _updateHistory();
 };
 
 #endif //ESP_SOLAR_BOY_INVERTER_H

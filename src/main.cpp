@@ -1,7 +1,3 @@
-#include <algorithm>
-#include <deque>
-#include <numeric>
-
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
@@ -15,6 +11,7 @@
 #include "inverter.h"
 #include "version.h"
 #include "data_collector.h"
+#include "SmartRelay.h"
 
 WiFiManager wifiManager;
 
@@ -24,22 +21,8 @@ Preferences prefs;
 ESP8266WebServer httpServer(80);
 ESP8266HTTPUpdateServer httpUpdater;
 
-/* DEQUE */
-std::deque<int> input_power_history;
-std::deque<int> battery_charge_history;
-const uint16_t DEQUE_SIZE = 30;  // use a multiple of 60
-uint64_t last_deque_update = 0;
-
-bool settings_pin_0_enable;
-uint16_t settings_battery_charge;
-uint32_t settings_input_power;
-uint8_t settings_monitoring_window_minutes;
-uint8_t settings_switch_cycle_minutes;
 bool settings_enable_data_collection;
 String settings_data_collection_url;
-
-/* PINS */
-bool is_pin0_on = false;
 
 Inverter inverter;
 
@@ -48,6 +31,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
+SmartRelay mySmartRelay;
 
 String processTemplate(const String &templateContent, const std::map<String, String> &variables) {
     String result = templateContent;
@@ -119,11 +103,11 @@ void handleSettings() {
     file.close();
     std::map<String, String> variables = {
             {"IP_ADDRESS",          inverter.ipAddress.toString()},
-            {"BATTERY_CHARGE",      String(settings_battery_charge)},
-            {"PIN_0_ENABLE",        settings_pin_0_enable ? "checked" : ""},
-            {"PIN_0_INPUT_POWER",   String(settings_input_power)},
-            {"PIN_0_TIMER",         String(settings_monitoring_window_minutes)},
-            {"PIN_0_CYCLE",         String(settings_switch_cycle_minutes)},
+            {"BATTERY_CHARGE",      String(mySmartRelay.minBatteryChargeSetting)},
+            {"PIN_0_ENABLE",        mySmartRelay.isPinOn ? "checked" : ""},
+            {"PIN_0_INPUT_POWER",   String(mySmartRelay.minPowerMeterActivePowerSetting)},
+            {"PIN_0_TIMER",         String(mySmartRelay.monitoringWindowMinutesSetting)},
+            {"PIN_0_CYCLE",         String(mySmartRelay.switchCycleMinutesSetting)},
             {"DATA_COLLECTION",     settings_enable_data_collection ? "checked" : ""},
             {"DATA_COLLECTION_URL", String(settings_data_collection_url)},
     };
@@ -133,20 +117,20 @@ void handleSettings() {
 
 void handlePostSettings() {
     if (httpServer.args() > 0) {
-        settings_pin_0_enable = httpServer.hasArg("pin-0-enable");
-        prefs.putBool("settings-pin-0-enable", settings_pin_0_enable);
+        mySmartRelay.isPinOn = httpServer.hasArg("pin-0-enable");
+        prefs.putBool("settings-pin-0-enable", mySmartRelay.isPinOn);
 
-        settings_battery_charge = (u_int16_t) httpServer.arg("pin-0-battery").toInt();
-        prefs.putUShort("settings-p0-battery-charge", settings_battery_charge);
+        mySmartRelay.minBatteryChargeSetting = (u_int16_t) httpServer.arg("pin-0-battery").toInt();
+        prefs.putUShort("settings-p0-battery-charge", mySmartRelay.minBatteryChargeSetting);
 
-        settings_input_power = (u_int32_t) httpServer.arg("pin-0-input-power").toInt();
-        prefs.putUInt("settings-p0-input-power", settings_input_power);
+        mySmartRelay.minPowerMeterActivePowerSetting = (u_int32_t) httpServer.arg("pin-0-input-power").toInt();
+        prefs.putUInt("settings-p0-input-power", mySmartRelay.minPowerMeterActivePowerSetting);
 
-        settings_monitoring_window_minutes = (u_int8_t) httpServer.arg("pin-0-timer").toInt();
-        prefs.putUChar("settings-p0-monitoring-window", settings_monitoring_window_minutes);
+        mySmartRelay.monitoringWindowMinutesSetting = (u_int8_t) httpServer.arg("pin-0-timer").toInt();
+        prefs.putUChar("settings-p0-monitoring-window", mySmartRelay.monitoringWindowMinutesSetting);
 
-        settings_switch_cycle_minutes = (u_int8_t) httpServer.arg("pin-0-cycle").toInt();
-        prefs.putUChar("settings-p0-switch-cycle", settings_switch_cycle_minutes);
+        mySmartRelay.switchCycleMinutesSetting = (u_int8_t) httpServer.arg("pin-0-cycle").toInt();
+        prefs.putUChar("settings-p0-switch-cycle", mySmartRelay.switchCycleMinutesSetting);
 
         settings_enable_data_collection = httpServer.hasArg("enable-data-collection");
         prefs.putBool("settings-enable-data-collection", settings_enable_data_collection);
@@ -170,34 +154,11 @@ void handlePostSettings() {
 void handleNotFound() { httpServer.send(404, "text/html", "<h1>404: Not found</h1>"); }
 
 void handlePin0Indicator() {
-    String pinIndicator = is_pin0_on
+    String pinIndicator = mySmartRelay.isPinOn
                           ? R"(<div class="pin-indicator pin-active" hx-get="/data/pin0indicator" hx-trigger="every 10s" hx-swap="outerHTML"></div>)"
                           : R"(<div class="pin-indicator" hx-get="/data/pin0indicator" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
 
     httpServer.send(200, "text/html", pinIndicator);
-}
-
-bool switch_pin(uint8_t pin) {
-    bool is_on;
-    auto min_battery = *std::min_element(battery_charge_history.begin(), battery_charge_history.end());
-    double input_sum = std::accumulate(input_power_history.begin(), input_power_history.end(), 0);
-    int mean_input = (int) (input_sum / input_power_history.size());
-    if (is_pin0_on) {
-        is_on = (min_battery >= settings_battery_charge) && (mean_input >= 100);
-    } else {
-        is_on = (min_battery >= settings_battery_charge) && (mean_input >= (int) settings_input_power);
-    }
-    if (!settings_pin_0_enable) {
-        is_on = false;
-    }
-    digitalWrite(pin, is_on);
-    Serial.print("Min battery: ");
-    Serial.println(min_battery);
-    Serial.print("Mean input power: ");
-    Serial.println(mean_input);
-    Serial.print("PIN ON: ");
-    Serial.println(is_on);
-    return is_on;
 }
 
 void setup() {
@@ -207,11 +168,11 @@ void setup() {
     wifiManager.autoConnect("esp-solar-boy", "changemeplease");
 
     prefs.begin("esp-solar-boy");
-    settings_pin_0_enable = prefs.putBool("settings-pin-0-enable", false);
-    settings_battery_charge = prefs.getUShort("settings-p0-battery-charge", 95);
-    settings_input_power = prefs.getUInt("settings-p0-input-power", 1500);
-    settings_monitoring_window_minutes = prefs.getUShort("settings-p0-monitoring-window", 5);
-    settings_switch_cycle_minutes = prefs.getUShort("settings-p0-switch-cycle", 10);
+    mySmartRelay.isPinOn = prefs.putBool("settings-pin-0-enable", false);
+    mySmartRelay.minBatteryChargeSetting = prefs.getUShort("settings-p0-battery-charge", 95);
+    mySmartRelay.minPowerMeterActivePowerSetting = prefs.getUInt("settings-p0-input-power", 1500);
+    mySmartRelay.monitoringWindowMinutesSetting = prefs.getUShort("settings-p0-monitoring-window", 5);
+    mySmartRelay.switchCycleMinutesSetting = prefs.getUShort("settings-p0-switch-cycle", 10);
     settings_enable_data_collection = prefs.getBool("settings-enable-data-collection", false);
     settings_data_collection_url = prefs.getString("settings-data-collection-url", "");
 
@@ -221,8 +182,6 @@ void setup() {
 
     IPAddress tempIpAdress;
     tempIpAdress.fromString(inverter_ip_str);
-
-    pinMode(D0, OUTPUT);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -264,6 +223,7 @@ void setup() {
 
     httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
+    mySmartRelay.begin(D1, &inverter);
 }
 
 void loop() {
@@ -275,39 +235,7 @@ void loop() {
         lastInverterDataTimestamp = timeClient.getEpochTime();
     }
 
-    uint64_t currentMillis = millis();
-    if (currentMillis - last_deque_update >= (settings_monitoring_window_minutes * 60 * 1000 / DEQUE_SIZE)) {
-        if (input_power_history.size() >= DEQUE_SIZE) {
-            input_power_history.pop_front();
-        }
-        input_power_history.push_back(inverter.getPowerMeterActivePower());
-
-        for (int val: input_power_history) {
-            Serial.print(val);
-            Serial.print(" ");
-        }
-        Serial.println();
-
-        if (battery_charge_history.size() >= DEQUE_SIZE) {
-            battery_charge_history.pop_front();
-        }
-        battery_charge_history.push_back(inverter.getBatteryStateOfCharge());
-
-        for (int val: battery_charge_history) {
-            Serial.print(val);
-            Serial.print(" ");
-        }
-        Serial.println();
-
-        last_deque_update = millis();
-    }
-
-    currentMillis = millis();
-    static uint64_t last_switch_check = 0;
-    if (currentMillis - last_switch_check >= (settings_switch_cycle_minutes * 60 * 1000)) {
-        last_switch_check = millis();
-        is_pin0_on = switch_pin(D0);
-    }
+    mySmartRelay.update();
 
     if (settings_enable_data_collection) {
         // Collect data with user consent

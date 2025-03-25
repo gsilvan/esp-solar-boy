@@ -1,3 +1,4 @@
+#include <numeric>
 #include "inverter.h"
 
 Inverter::Inverter() = default;
@@ -12,7 +13,7 @@ void Inverter::begin(IPAddress ipAddress, in_port_t port) {
 
 bool Inverter::update() {
     uint64_t currentMillis = millis();
-    if (currentMillis - this->_lastUpdate >= this->_updateInterval) {
+    if (currentMillis - this->_lastUpdate >= this->INVERTER_UPDATE_INTERVAL) {
         if (!this->_modbus.isConnected(this->ipAddress)) {
             Serial.println("Inverter is disconnected!");
             this->_modbus.connect(this->ipAddress, this->port);
@@ -29,6 +30,7 @@ bool Inverter::update() {
         this->printy();
         return true;
     }
+    this->_updateHistory(); // We invoke update the history in update loops where no value is fetched from inverter.
     return false;
 }
 
@@ -44,7 +46,7 @@ int32_t Inverter::getPlantPower() const {
     return (this->_plantPower >> 16) | (this->_plantPower << 16);
 }
 
-void Inverter::printy() const {
+void Inverter::printy() {
     Serial.printf("Battery: %d\n", this->getBatteryStateOfCharge());
     Serial.printf("Battery charge power: %d\n", this->getBatteryChargePower());
     Serial.printf("Plant power: %d\n", this->getPlantPower());
@@ -52,6 +54,8 @@ void Inverter::printy() const {
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
     Serial.printf("State1: %s\n", this->getState1().c_str());
     Serial.printf("State1 RAW: %d\n", this->_state1);
+    this->_printDeque(&this->_powerMeterActivePowerHistory);
+    this->_printDeque(&this->_batteryStateOfChargeHistory);
 }
 
 int32_t Inverter::getPowerMeterActivePower() const {
@@ -94,4 +98,36 @@ String Inverter::getState1() const {
         default:
             return "";
     }
+}
+
+void Inverter::_addToDeque(int value, std::deque<int> *dq) {
+    if (dq->size() >= this->DEQUE_SIZE) {
+        dq->pop_front();
+    }
+    dq->push_back(value);
+}
+
+void Inverter::_printDeque(std::deque<int> *dq) {
+    for (auto val: *dq) {
+        Serial.print(val);
+        Serial.print(" ");
+    }
+    Serial.println();
+}
+
+void Inverter::_updateHistory() {
+    if (millis() - this->_lastHistoryUpdate >= this->HISTORY_UPDATE_INTERVAL) {
+        this->_addToDeque(this->getPowerMeterActivePower(), &this->_powerMeterActivePowerHistory);
+        this->_addToDeque(this->getBatteryStateOfCharge(), &this->_batteryStateOfChargeHistory);
+        this->_lastHistoryUpdate = millis();
+    }
+}
+
+int Inverter::minBatteryStateOfCharge() {
+    return *std::min_element(this->_batteryStateOfChargeHistory.begin(), this->_batteryStateOfChargeHistory.end());
+}
+
+int Inverter::meanPowerMeterActivePower() {
+    double input_sum = std::accumulate(this->_powerMeterActivePowerHistory.begin(), this->_powerMeterActivePowerHistory.end(), 0);
+    return (int) (input_sum / this->_powerMeterActivePowerHistory.size());
 }
