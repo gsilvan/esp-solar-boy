@@ -177,7 +177,7 @@ bool switch_pin(uint8_t pin) {
     if (is_pin0_on) {
         is_on = (min_battery >= settings_battery_charge) && (mean_input >= 100);
     } else {
-        is_on = (min_battery >= settings_battery_charge) && (mean_input >= settings_input_power);
+        is_on = (min_battery >= settings_battery_charge) && (mean_input >= (int) settings_input_power);
     }
     if (!settings_pin_0_enable) {
         is_on = false;
