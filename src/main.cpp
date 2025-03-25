@@ -30,6 +30,7 @@ std::deque<int> battery_charge_history;
 const uint16_t DEQUE_SIZE = 30;  // use a multiple of 60
 uint64_t last_deque_update = 0;
 
+bool settings_pin_0_enable;
 uint16_t settings_battery_charge;
 uint32_t settings_input_power;
 uint8_t settings_monitoring_window_minutes;
@@ -119,6 +120,7 @@ void handleSettings() {
     std::map<String, String> variables = {
             {"IP_ADDRESS",          inverter.ipAddress.toString()},
             {"BATTERY_CHARGE",      String(settings_battery_charge)},
+            {"PIN_0_ENABLE",        settings_pin_0_enable ? "checked" : ""},
             {"PIN_0_INPUT_POWER",   String(settings_input_power)},
             {"PIN_0_TIMER",         String(settings_monitoring_window_minutes)},
             {"PIN_0_CYCLE",         String(settings_switch_cycle_minutes)},
@@ -131,6 +133,9 @@ void handleSettings() {
 
 void handlePostSettings() {
     if (httpServer.args() > 0) {
+        settings_pin_0_enable = httpServer.hasArg("pin-0-enable");
+        prefs.putBool("settings-pin-0-enable", settings_pin_0_enable);
+
         settings_battery_charge = (u_int16_t) httpServer.arg("pin-0-battery").toInt();
         prefs.putUShort("settings-p0-battery-charge", settings_battery_charge);
 
@@ -174,6 +179,9 @@ bool switch_pin(uint8_t pin) {
     } else {
         is_on = (min_battery >= settings_battery_charge) && (mean_input >= settings_input_power);
     }
+    if (!settings_pin_0_enable) {
+        is_on = false;
+    }
     digitalWrite(pin, is_on);
     Serial.print("Min battery: ");
     Serial.println(min_battery);
@@ -191,6 +199,7 @@ void setup() {
     wifiManager.autoConnect("esp-solar-boy", "changemeplease");
 
     prefs.begin("esp-solar-boy");
+    settings_pin_0_enable = prefs.putBool("settings-pin-0-enable", false);
     settings_battery_charge = prefs.getUShort("settings-p0-battery-charge", 95);
     settings_input_power = prefs.getUInt("settings-p0-input-power", 1500);
     settings_monitoring_window_minutes = prefs.getUShort("settings-p0-monitoring-window", 5);

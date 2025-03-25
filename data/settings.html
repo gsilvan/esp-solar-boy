@@ -36,6 +36,10 @@
         <h2>PINs</h2>
         <h3>PIN_0</h3>
         <div class="field">
+            <label for="pin-0-enable">Enable:</label>
+            <input class="input" type="checkbox" id="pin-0-enable" name="pin-0-enable" {{PIN_0_ENABLE}}>
+        </div>
+        <div class="field">
             <label for="pin-0-battery">Battery charge (%):</label>
             <input class="input" type="number" min="0" max="100" step="1" id="pin-0-battery" name="pin-0-battery"
                    value="{{BATTERY_CHARGE}}">
