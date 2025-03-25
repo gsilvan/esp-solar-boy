@@ -171,8 +171,8 @@ void handleNotFound() { httpServer.send(404, "text/html", "<h1>404: Not found</h
 
 void handlePin0Indicator() {
     String pinIndicator = is_pin0_on
-                          ? R"(<div class="pin-indicator pin-active" hx-get="/data/pin0indicator" hx-trigger="load, every 10s" hx-swap="outerHTML"></div>)"
-                          : R"(<div class="pin-indicator" hx-get="/data/pin0indicator" hx-trigger="load, every 10s" hx-swap="outerHTML"></div>)";
+                          ? R"(<div class="pin-indicator pin-active" hx-get="/data/pin0indicator" hx-trigger="every 10s" hx-swap="outerHTML"></div>)"
+                          : R"(<div class="pin-indicator" hx-get="/data/pin0indicator" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
 
     httpServer.send(200, "text/html", pinIndicator);
 }
