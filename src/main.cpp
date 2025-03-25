@@ -156,7 +156,7 @@ void handlePostSettings() {
         }
 
         httpServer.sendHeader("Location", "/settings", true);
-        httpServer.send(302, "text/plain", "");
+        httpServer.send(200, "text/html", "Saved 👍");
     } else {
         httpServer.send(400, "application/html", "<h1>Bad request</h1>");
     }

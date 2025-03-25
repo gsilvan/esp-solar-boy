@@ -16,7 +16,8 @@
         <a href="/update">Firmware</a>
     </nav>
     <h2>Settings</h2>
-    <form method="post">
+    <div id="message"></div>
+    <form method="post" hx-post="/settings" hx-target="#message" hx-swap="innerHTML">
         <h2>Device</h2>
         <div class="field">
             <label for="settings-inverter-ip">Inverter IPv4:</label>
