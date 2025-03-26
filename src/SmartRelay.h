@@ -15,7 +15,9 @@ public:
 
     void update();
 
+    const uint64_t UPDATE_INTERVAL = 1000;
     bool isPinOn = false;
+    bool isPinAlwaysOn = false;
     bool isPinEnabledSetting = false;
     uint16_t minBatteryChargeSetting = 95;
     uint32_t minPowerMeterActivePowerSetting = 500;
@@ -25,6 +27,7 @@ private:
     uint8_t _pin;
     Inverter *_inverter;
     uint64_t _lastEnableTime = 0;
+    uint64_t _lastUpdateTime = 0;
 
     uint64_t _switchCycleMillis() const;
 
