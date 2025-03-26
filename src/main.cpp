@@ -32,7 +32,7 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
-SmartRelay mySmartRelay;
+SmartRelay mySmartRelay(D1);
 
 void handleRoot() {
     File file = LittleFS.open("/index.html", "r");
@@ -111,17 +111,10 @@ void handlePostSettings() {
         mySmartRelay.isPinEnabledSetting = httpServer.hasArg("pin-0-enable");
         prefs.putBool("settings-pin-0-enable", mySmartRelay.isPinEnabledSetting);
 
-        mySmartRelay.minBatteryChargeSetting = (u_int16_t) httpServer.arg("pin-0-battery").toInt();
-        prefs.putUShort("settings-p0-battery-charge", mySmartRelay.minBatteryChargeSetting);
-
-        mySmartRelay.minPowerMeterActivePowerSetting = (u_int32_t) httpServer.arg("pin-0-input-power").toInt();
-        prefs.putUInt("settings-p0-input-power", mySmartRelay.minPowerMeterActivePowerSetting);
-
-        mySmartRelay.monitoringWindowMinutesSetting = (u_int8_t) httpServer.arg("pin-0-timer").toInt();
-        prefs.putUChar("settings-p0-monitoring-window", mySmartRelay.monitoringWindowMinutesSetting);
-
-        mySmartRelay.switchCycleMinutesSetting = (u_int8_t) httpServer.arg("pin-0-cycle").toInt();
-        prefs.putUChar("settings-p0-switch-cycle", mySmartRelay.switchCycleMinutesSetting);
+        mySmartRelay.setMinBatteryChargeSetting((u_int16_t) httpServer.arg("pin-0-battery").toInt());
+        mySmartRelay.setMinPowerMeterActivePowerSetting((u_int32_t) httpServer.arg("pin-0-input-power").toInt());
+        mySmartRelay.setMonitoringWindowMinutesSetting((u_int8_t) httpServer.arg("pin-0-timer").toInt());
+        mySmartRelay.setSwitchCycleMinutesSetting((u_int8_t) httpServer.arg("pin-0-cycle").toInt());
 
         settings_enable_data_collection = httpServer.hasArg("enable-data-collection");
         prefs.putBool("settings-enable-data-collection", settings_enable_data_collection);
@@ -159,11 +152,6 @@ void setup() {
     wifiManager.autoConnect("esp-solar-boy", "changemeplease");
 
     prefs.begin("esp-solar-boy");
-    mySmartRelay.isPinEnabledSetting = prefs.putBool("settings-pin-0-enable", false);
-    mySmartRelay.minBatteryChargeSetting = prefs.getUShort("settings-p0-battery-charge", 95);
-    mySmartRelay.minPowerMeterActivePowerSetting = prefs.getUInt("settings-p0-input-power", 1500);
-    mySmartRelay.monitoringWindowMinutesSetting = prefs.getUShort("settings-p0-monitoring-window", 5);
-    mySmartRelay.switchCycleMinutesSetting = prefs.getUShort("settings-p0-switch-cycle", 10);
     settings_enable_data_collection = prefs.getBool("settings-enable-data-collection", false);
     settings_data_collection_url = prefs.getString("settings-data-collection-url", "");
 
@@ -214,7 +202,7 @@ void setup() {
 
     httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
-    mySmartRelay.begin(D1, &inverter);
+    mySmartRelay.registerInverter(&inverter);
 }
 
 void loop() {
