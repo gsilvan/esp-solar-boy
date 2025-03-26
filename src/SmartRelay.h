@@ -2,8 +2,12 @@
 #define ESP_SOLAR_BOY_SMARTRELAY_H
 #include <Arduino.h>
 #include <Preferences.h>
+#include <ESP8266WebServer.h>
+#include <LittleFS.h>
 #include "inverter.h"
+#include "template.h"
 
+#define PIN_ENABLED_SETTING "pinEnabled"
 #define MIN_BATTERY_SETTING "minBattery"
 #define MIN_POWER_SETTING "minPower"
 #define MONITOR_WINDOW_SETTING "monWindow"
@@ -15,9 +19,11 @@ public:
 
     ~SmartRelay() = default;
 
-    void setup(Inverter *inverter);
+    void setup(Inverter *inverter, ESP8266WebServer *httpServer);
 
     void update();
+
+    void setIsPinEnabledSetting(bool value);
 
     void setMinBatteryChargeSetting(uint16_t value);
 
@@ -38,6 +44,7 @@ public:
 private:
     uint8_t _pin;
     Inverter *_inverter;
+    ESP8266WebServer *_httpServer;
     uint64_t _lastEnableTime = 0;
     uint64_t _lastUpdateTime = 0;
     Preferences _preferences;
@@ -48,6 +55,12 @@ private:
     void _setPinOn();
 
     void _setPinOff();
+
+    String _generateRoute();
+
+    String _generateHTML();
+
+    void _registerHttpRoutes();
 };
 
 

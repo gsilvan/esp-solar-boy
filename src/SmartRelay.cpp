@@ -5,6 +5,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     pinMode(this->_pin, OUTPUT);
     digitalWrite(this->_pin, LOW);
     this->_inverter = nullptr;
+    this->_httpServer = nullptr;
     this->_preferencesNamespace = String("smart-relay") + String(this->_pin);
 
     _preferences.begin(_preferencesNamespace.c_str(), false);
@@ -15,8 +16,10 @@ SmartRelay::SmartRelay(uint8_t pin) {
     switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
 }
 
-void SmartRelay::setup(Inverter *inverter) {
+void SmartRelay::setup(Inverter *inverter, ESP8266WebServer *httpServer) {
     this->_inverter = inverter;
+    this->_httpServer = httpServer;
+    this->_registerHttpRoutes();
 }
 
 void SmartRelay::update() {
@@ -77,6 +80,11 @@ void SmartRelay::_setPinOff() {
     Serial.println("Set pin OFF!");
 }
 
+void SmartRelay::setIsPinEnabledSetting(bool value) {
+    this->isPinEnabledSetting = value;
+    this->_preferences.putBool(PIN_ENABLED_SETTING, value);
+}
+
 void SmartRelay::setMinBatteryChargeSetting(uint16_t value) {
     this->minBatteryChargeSetting = value;
     this->_preferences.putUShort(MIN_BATTERY_SETTING, value);
@@ -96,3 +104,42 @@ void SmartRelay::setSwitchCycleMinutesSetting(uint8_t value) {
     this->switchCycleMinutesSetting = value;
     this->_preferences.putUChar(SWITCH_CYCLE_SETTING, value);
 }
+
+String SmartRelay::_generateRoute() {
+    return String("/settings/pin/") + String(this->_pin);
+}
+
+String SmartRelay::_generateHTML() {
+    File file = LittleFS.open("/pin.html", "r");
+    if (!file) {
+        return "File Not Found";
+    }
+    String templateContent = file.readString();
+    file.close();
+    std::map<String, String> variables = {
+            {"PIN_NUMBER", String(this->_pin)},
+            {"ROUTE", this->_generateRoute()},
+            {"PIN_ENABLE", this->isPinEnabledSetting ? "checked" : ""},
+            {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
+            {"MIN_ACTIVE_POWER", String(this->minPowerMeterActivePowerSetting)},
+            {"MONITORING_WINDOW", String(this->monitoringWindowMinutesSetting)},
+            {"SWITCH_CYCLE", String(this->switchCycleMinutesSetting)},
+    };
+    return processTemplate(templateContent, variables);
+}
+
+void SmartRelay::_registerHttpRoutes() {
+    Serial.println(this->_generateRoute());
+    this->_httpServer->on(this->_generateRoute(), HTTP_GET, [this]() {
+        this->_httpServer->send(200, "text/html", this->_generateHTML());
+    });
+    this->_httpServer->on(this->_generateRoute(), HTTP_POST, [this]() {
+        this->setIsPinEnabledSetting(_httpServer->hasArg("pin-enable"));
+        this->setMinBatteryChargeSetting((u_int16_t) this->_httpServer->arg("pin-battery").toInt());
+        this->setMinPowerMeterActivePowerSetting((u_int32_t) this->_httpServer->arg("pin-active-power").toInt());
+        this->setMonitoringWindowMinutesSetting((u_int8_t) this->_httpServer->arg("pin-monitor-window").toInt());
+        this->setSwitchCycleMinutesSetting((u_int8_t) this->_httpServer->arg("pin-switch-cycle").toInt());
+        this->_httpServer->send(200, "text/html", "Saved 👍");
+    });
+}
+

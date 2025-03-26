@@ -94,11 +94,6 @@ void handleSettings() {
     file.close();
     std::map<String, String> variables = {
             {"IP_ADDRESS",          inverter.ipAddress.toString()},
-            {"BATTERY_CHARGE",      String(mySmartRelay.minBatteryChargeSetting)},
-            {"PIN_0_ENABLE",        mySmartRelay.isPinEnabledSetting ? "checked" : ""},
-            {"PIN_0_INPUT_POWER",   String(mySmartRelay.minPowerMeterActivePowerSetting)},
-            {"PIN_0_TIMER",         String(mySmartRelay.monitoringWindowMinutesSetting)},
-            {"PIN_0_CYCLE",         String(mySmartRelay.switchCycleMinutesSetting)},
             {"DATA_COLLECTION",     settings_enable_data_collection ? "checked" : ""},
             {"DATA_COLLECTION_URL", String(settings_data_collection_url)},
     };
@@ -108,14 +103,6 @@ void handleSettings() {
 
 void handlePostSettings() {
     if (httpServer.args() > 0) {
-        mySmartRelay.isPinEnabledSetting = httpServer.hasArg("pin-0-enable");
-        prefs.putBool("settings-pin-0-enable", mySmartRelay.isPinEnabledSetting);
-
-        mySmartRelay.setMinBatteryChargeSetting((u_int16_t) httpServer.arg("pin-0-battery").toInt());
-        mySmartRelay.setMinPowerMeterActivePowerSetting((u_int32_t) httpServer.arg("pin-0-input-power").toInt());
-        mySmartRelay.setMonitoringWindowMinutesSetting((u_int8_t) httpServer.arg("pin-0-timer").toInt());
-        mySmartRelay.setSwitchCycleMinutesSetting((u_int8_t) httpServer.arg("pin-0-cycle").toInt());
-
         settings_enable_data_collection = httpServer.hasArg("enable-data-collection");
         prefs.putBool("settings-enable-data-collection", settings_enable_data_collection);
 
@@ -202,7 +189,7 @@ void setup() {
 
     httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
-    mySmartRelay.setup(&inverter);
+    mySmartRelay.setup(&inverter, &httpServer);
 }
 
 void loop() {

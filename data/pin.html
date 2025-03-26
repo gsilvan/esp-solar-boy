@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Relay {{PIN_NUMBER}} Settings - ESP Solar Boy</title>
+    <link rel="stylesheet" href="../../style.css">
+    <script src="../../htmx.min.js"></script>
+</head>
+<body>
+<main>
+    <h1>ESP Solar Boy</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/settings">Settings</a>
+        <a href="/update">Firmware</a>
+    </nav>
+    <h2>PIN Settings</h2>
+    <div id="message"></div>
+    <form method="post" hx-post="{{ROUTE}}" hx-target="#message" hx-swap="innerHTML">
+        <h3>PIN {{PIN_NUMBER}}</h3>
+        <div class="field">
+            <label for="pin-enable">Enable:</label>
+            <input class="input" type="checkbox" id="pin-enable" name="pin-enable" {{PIN_ENABLE}}>
+        </div>
+        <div class="field">
+            <label for="pin-battery">Battery charge (%):</label>
+            <input class="input" type="number" min="0" max="100" step="1" id="pin-battery" name="pin-battery"
+                   value="{{MIN_BATTERY_CHARGE}}">
+        </div>
+        <div class="field">
+            <label for="pin-active-power">Power overflow (Watts):</label>
+            <input class="input" type="number" min="100" step="100" id="pin-active-power" name="pin-active-power"
+                   value="{{MIN_ACTIVE_POWER}}">
+        </div>
+        <div class="field">
+            <label for="pin-monitor-window">Monitoring window (minutes):</label>
+            <input class="input" type="number" min="0" max="60" step="1" id="pin-monitor-window" name="pin-monitor-window"
+                   value="{{MONITORING_WINDOW}}">
+        </div>
+        <div class="field">
+            <label for="pin-switch-cycle">Switch cycle (minutes):</label>
+            <input class="input" type="number" min="0" max="60" step="1" id="pin-switch-cycle" name="pin-switch-cycle"
+                   value="{{SWITCH_CYCLE}}">
+        </div>
+        <button>Save</button>
+    </form>
+</main>
+</body>
+</html>
