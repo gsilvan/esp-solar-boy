@@ -12,6 +12,7 @@
 #include "version.h"
 #include "data_collector.h"
 #include "SmartRelay.h"
+#include "template.h"
 
 WiFiManager wifiManager;
 
@@ -32,16 +33,6 @@ u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
 SmartRelay mySmartRelay;
-
-String processTemplate(const String &templateContent, const std::map<String, String> &variables) {
-    String result = templateContent;
-
-    for (const auto &pair: variables) {
-        result.replace("{{" + pair.first + "}}", pair.second);
-    }
-
-    return result;
-}
 
 void handleRoot() {
     File file = LittleFS.open("/index.html", "r");
