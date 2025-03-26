@@ -29,15 +29,15 @@ void SmartRelay::update() {
         return;
     }
     if (this->isPinOn) {
-        if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= this->minBatteryChargeSetting) &&
+        if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= (int) this->minBatteryChargeSetting) &&
             (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= 100)) {
             this->_setPinOn();
             return;
         }
     }
     if (!this->isPinOn) {
-        if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= this->minBatteryChargeSetting) &&
-            (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= this->minPowerMeterActivePowerSetting)) {
+        if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= (int) this->minBatteryChargeSetting) &&
+            (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= (int) this->minPowerMeterActivePowerSetting)) {
             this->_setPinOn();
             return;
         }
