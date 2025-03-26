@@ -31,9 +31,9 @@ public:
 
     void printy();
 
-    int minBatteryStateOfCharge();
+    int minBatteryStateOfCharge(int lastNMinutes);
 
-    int meanPowerMeterActivePower();
+    int meanPowerMeterActivePower(int lastNMinutes);
 
     IPAddress ipAddress;
     in_port_t port = 502;
@@ -59,6 +59,8 @@ private:
     void _printDeque(std::deque<int> *dq);
 
     void _updateHistory();
+
+    int _minutesToN(unsigned int minutes);
 };
 
 #endif //ESP_SOLAR_BOY_INVERTER_H

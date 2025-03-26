@@ -125,18 +125,24 @@ void Inverter::_updateHistory() {
     }
 }
 
-int Inverter::minBatteryStateOfCharge() {
+int Inverter::_minutesToN(unsigned int minutes) {
+    return 60000 * minutes / this->HISTORY_UPDATE_INTERVAL;
+}
+
+int Inverter::minBatteryStateOfCharge(int lastNMinutes) {
     if (this->_batteryStateOfChargeHistory.empty()) {
         return 0;
     }
-    return *std::min_element(this->_batteryStateOfChargeHistory.begin(), this->_batteryStateOfChargeHistory.end());
+    int indexOffset = this->_minutesToN(lastNMinutes);
+    return *std::min_element(this->_batteryStateOfChargeHistory.end() - indexOffset, this->_batteryStateOfChargeHistory.end());
 }
 
-int Inverter::meanPowerMeterActivePower() {
+int Inverter::meanPowerMeterActivePower(int lastNMinutes) {
     if (this->_powerMeterActivePowerHistory.empty()) {
         return 0;
     }
-    double input_sum = std::accumulate(this->_powerMeterActivePowerHistory.begin(),
+    int indexOffset = this->_minutesToN(lastNMinutes);
+    double input_sum = std::accumulate(this->_powerMeterActivePowerHistory.end() - indexOffset,
                                        this->_powerMeterActivePowerHistory.end(), 0);
     return (int) (input_sum / this->_powerMeterActivePowerHistory.size());
 }
