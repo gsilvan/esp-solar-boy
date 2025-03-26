@@ -16,6 +16,7 @@ public:
     void update();
 
     bool isPinOn = false;
+    bool isPinEnabledSetting = false;
     uint16_t minBatteryChargeSetting = 95;
     uint32_t minPowerMeterActivePowerSetting = 500;
     uint8_t monitoringWindowMinutesSetting = 1;

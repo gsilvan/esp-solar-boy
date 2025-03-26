@@ -95,7 +95,7 @@ void handleSettings() {
     std::map<String, String> variables = {
             {"IP_ADDRESS",          inverter.ipAddress.toString()},
             {"BATTERY_CHARGE",      String(mySmartRelay.minBatteryChargeSetting)},
-            {"PIN_0_ENABLE",        mySmartRelay.isPinOn ? "checked" : ""},
+            {"PIN_0_ENABLE",        mySmartRelay.isPinEnabledSetting ? "checked" : ""},
             {"PIN_0_INPUT_POWER",   String(mySmartRelay.minPowerMeterActivePowerSetting)},
             {"PIN_0_TIMER",         String(mySmartRelay.monitoringWindowMinutesSetting)},
             {"PIN_0_CYCLE",         String(mySmartRelay.switchCycleMinutesSetting)},
@@ -108,8 +108,8 @@ void handleSettings() {
 
 void handlePostSettings() {
     if (httpServer.args() > 0) {
-        mySmartRelay.isPinOn = httpServer.hasArg("pin-0-enable");
-        prefs.putBool("settings-pin-0-enable", mySmartRelay.isPinOn);
+        mySmartRelay.isPinEnabledSetting = httpServer.hasArg("pin-0-enable");
+        prefs.putBool("settings-pin-0-enable", mySmartRelay.isPinEnabledSetting);
 
         mySmartRelay.minBatteryChargeSetting = (u_int16_t) httpServer.arg("pin-0-battery").toInt();
         prefs.putUShort("settings-p0-battery-charge", mySmartRelay.minBatteryChargeSetting);
@@ -159,7 +159,7 @@ void setup() {
     wifiManager.autoConnect("esp-solar-boy", "changemeplease");
 
     prefs.begin("esp-solar-boy");
-    mySmartRelay.isPinOn = prefs.putBool("settings-pin-0-enable", false);
+    mySmartRelay.isPinEnabledSetting = prefs.putBool("settings-pin-0-enable", false);
     mySmartRelay.minBatteryChargeSetting = prefs.getUShort("settings-p0-battery-charge", 95);
     mySmartRelay.minPowerMeterActivePowerSetting = prefs.getUInt("settings-p0-input-power", 1500);
     mySmartRelay.monitoringWindowMinutesSetting = prefs.getUShort("settings-p0-monitoring-window", 5);
