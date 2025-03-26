@@ -1,11 +1,9 @@
+#ifndef ESP_SOLAR_BOY_INVERTER_H
+#define ESP_SOLAR_BOY_INVERTER_H
 #include <deque>
 #include <Arduino.h>
 #include <IPAddress.h>
 #include <ModbusIP_ESP8266.h>
-
-
-#ifndef ESP_SOLAR_BOY_INVERTER_H
-#define ESP_SOLAR_BOY_INVERTER_H
 
 class Inverter {
 public:

@@ -1,8 +1,7 @@
-#include <Arduino.h>
-#include <map>
-
 #ifndef ESP_SOLAR_BOY_TEMPLATE_H
 #define ESP_SOLAR_BOY_TEMPLATE_H
+#include <Arduino.h>
+#include <map>
 
 inline String processTemplate(const String &templateContent, const std::map<String, String> &variables) {
     String result = templateContent;

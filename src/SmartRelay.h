@@ -1,9 +1,8 @@
+#ifndef ESP_SOLAR_BOY_SMARTRELAY_H
+#define ESP_SOLAR_BOY_SMARTRELAY_H
 #include <Arduino.h>
 #include <Preferences.h>
 #include "inverter.h"
-
-#ifndef ESP_SOLAR_BOY_SMARTRELAY_H
-#define ESP_SOLAR_BOY_SMARTRELAY_H
 
 #define MIN_BATTERY_SETTING "minBattery"
 #define MIN_POWER_SETTING "minPower"

@@ -1,15 +1,11 @@
-//
-// Created by silvan on 10.02.25.
-//
+#ifndef ESP_SOLAR_BOY_DATA_COLLECTOR_H
+#define ESP_SOLAR_BOY_DATA_COLLECTOR_H
 #include "inverter.h"
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
-
-#ifndef ESP_SOLAR_BOY_DATA_COLLECTOR_H
-#define ESP_SOLAR_BOY_DATA_COLLECTOR_H
 
 
 class DataCollector {
