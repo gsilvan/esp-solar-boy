@@ -15,7 +15,7 @@ public:
 
     ~SmartRelay() = default;
 
-    void registerInverter(Inverter *inverter);
+    void setup(Inverter *inverter);
 
     void update();
 

@@ -15,7 +15,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
 }
 
-void SmartRelay::registerInverter(Inverter *inverter) {
+void SmartRelay::setup(Inverter *inverter) {
     this->_inverter = inverter;
 }
 

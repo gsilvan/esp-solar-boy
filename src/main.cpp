@@ -202,7 +202,7 @@ void setup() {
 
     httpServer.begin();  // Actually start the server
     Serial.println("HTTP server started");
-    mySmartRelay.registerInverter(&inverter);
+    mySmartRelay.setup(&inverter);
 }
 
 void loop() {
