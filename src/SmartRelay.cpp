@@ -20,7 +20,7 @@ void SmartRelay::registerInverter(Inverter *inverter) {
 }
 
 void SmartRelay::update() {
-   if (millis() - this->_lastUpdateTime < this->UPDATE_INTERVAL) {
+    if (millis() - this->_lastUpdateTime < this->UPDATE_INTERVAL) {
         return;
     }
     if (this->isPinAlwaysOn) {
