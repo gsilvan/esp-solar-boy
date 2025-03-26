@@ -19,6 +19,10 @@ void SmartRelay::update() {
         this->_setPinOff();
         return;
     }
+    if (!this->_inverter->isConnected) {
+        this->_setPinOff();
+        return;
+    }
     if (this->isPinOn && (millis() - this->_lastEnableTime < this->_switchCycleMillis())) {
         // If relay is on and our switch cycle is running we do nothing in this update loop
         this->_lastUpdateTime = millis();

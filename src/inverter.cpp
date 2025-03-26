@@ -15,9 +15,11 @@ bool Inverter::update() {
     uint64_t currentMillis = millis();
     if (currentMillis - this->_lastUpdate >= this->INVERTER_UPDATE_INTERVAL) {
         if (!this->_modbus.isConnected(this->ipAddress)) {
+            this->isConnected = false;
             Serial.println("Inverter is disconnected!");
             this->_modbus.connect(this->ipAddress, this->port);
         } else {
+            this->isConnected = true;
             this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfCharge, 1, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePower, 2, nullptr, 1);
             this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPower, 2, nullptr, 1);

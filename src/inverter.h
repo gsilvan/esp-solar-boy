@@ -37,6 +37,7 @@ public:
 
     IPAddress ipAddress;
     in_port_t port = 502;
+    bool isConnected = false;
     const uint16_t DEQUE_SIZE = 360;
     const uint64_t INVERTER_UPDATE_INTERVAL = 10000;
     const uint64_t HISTORY_UPDATE_INTERVAL = 10000;
