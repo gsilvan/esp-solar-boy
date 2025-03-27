@@ -2,7 +2,8 @@
 #define ESP_SOLAR_BOY_SMARTRELAY_H
 #include <Arduino.h>
 #include <Preferences.h>
-#include <ESP8266WebServer.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include "inverter.h"
 #include "template.h"
@@ -19,7 +20,7 @@ public:
 
     ~SmartRelay() = default;
 
-    void setup(Inverter *inverter, ESP8266WebServer *httpServer);
+    void setup(Inverter *inverter, AsyncWebServer *httpServer);
 
     void update();
 
@@ -44,7 +45,7 @@ public:
 private:
     uint8_t _pin;
     Inverter *_inverter;
-    ESP8266WebServer *_httpServer;
+    AsyncWebServer *_httpServer;
     uint64_t _lastEnableTime = 0;
     uint64_t _lastUpdateTime = 0;
     Preferences _preferences;

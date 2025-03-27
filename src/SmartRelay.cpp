@@ -18,7 +18,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
 }
 
-void SmartRelay::setup(Inverter *inverter, ESP8266WebServer *httpServer) {
+void SmartRelay::setup(Inverter *inverter, AsyncWebServer *httpServer) {
     this->_inverter = inverter;
     this->_httpServer = httpServer;
     this->_registerHttpRoutes();
@@ -108,7 +108,7 @@ void SmartRelay::setSwitchCycleMinutesSetting(uint8_t value) {
 }
 
 String SmartRelay::_generateSettingsRoute() {
-    return String("/settings/pin/" + String(this->_pin));
+    return String("/pin/" + String(this->_pin));
 }
 
 String SmartRelay::_generateIndicatorRoute() {
@@ -144,20 +144,19 @@ String SmartRelay::_generateIndicatorHTML() {
 }
 
 void SmartRelay::_registerHttpRoutes() {
-    Serial.println(this->_settingsRoute);
-    this->_httpServer->on(this->_settingsRoute, HTTP_GET, [this]() {
-        this->_httpServer->send(200, "text/html", this->_generateHTML());
+    this->_httpServer->on(this->_indicatorRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, "text/html", this->_generateIndicatorHTML());
     });
-    this->_httpServer->on(this->_settingsRoute, HTTP_POST, [this]() {
-        this->setIsPinEnabledSetting(_httpServer->hasArg("pin-enable"));
-        this->setMinBatteryChargeSetting((u_int16_t) this->_httpServer->arg("pin-battery").toInt());
-        this->setMinPowerMeterActivePowerSetting((u_int32_t) this->_httpServer->arg("pin-active-power").toInt());
-        this->setMonitoringWindowMinutesSetting((u_int8_t) this->_httpServer->arg("pin-monitor-window").toInt());
-        this->setSwitchCycleMinutesSetting((u_int8_t) this->_httpServer->arg("pin-switch-cycle").toInt());
-        this->_httpServer->send(200, "text/html", "Saved 👍");
+    this->_httpServer->on(this->_settingsRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, "text/html", this->_generateHTML());
     });
-    this->_httpServer->on(this->_indicatorRoute, HTTP_GET, [this]() {
-        this->_httpServer->send(200, "text/html", this->_generateIndicatorHTML());
+    this->_httpServer->on(this->_settingsRoute.c_str(), HTTP_POST, [this](AsyncWebServerRequest *request) {
+        this->setIsPinEnabledSetting(request->hasArg("pin-enable"));
+        this->setMinBatteryChargeSetting((u_int16_t) request->arg("pin-battery").toInt());
+        this->setMinPowerMeterActivePowerSetting((u_int32_t) request->arg("pin-active-power").toInt());
+        this->setMonitoringWindowMinutesSetting((u_int8_t) request->arg("pin-monitor-window").toInt());
+        this->setSwitchCycleMinutesSetting((u_int8_t) request->arg("pin-switch-cycle").toInt());
+        request->send(200, "text/plain", "Saved 👍");
     });
 }
 
