@@ -49,6 +49,7 @@ private:
     uint64_t _lastUpdateTime = 0;
     Preferences _preferences;
     String _preferencesNamespace;
+    String _settingsRoute;
 
     uint64_t _switchCycleMillis() const;
 
@@ -56,7 +57,7 @@ private:
 
     void _setPinOff();
 
-    String _generateRoute();
+    String _generateSettingsRoute();
 
     String _generateHTML();
 

@@ -7,6 +7,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_inverter = nullptr;
     this->_httpServer = nullptr;
     this->_preferencesNamespace = String("smart-relay") + String(this->_pin);
+    this->_settingsRoute = this->_generateSettingsRoute();
 
     _preferences.begin(_preferencesNamespace.c_str(), false);
 
@@ -105,8 +106,8 @@ void SmartRelay::setSwitchCycleMinutesSetting(uint8_t value) {
     this->_preferences.putUChar(SWITCH_CYCLE_SETTING, value);
 }
 
-String SmartRelay::_generateRoute() {
-    return String("/settings/pin/") + String(this->_pin);
+String SmartRelay::_generateSettingsRoute() {
+    return String("/settings/pin/" + String(this->_pin));
 }
 
 String SmartRelay::_generateHTML() {
@@ -118,7 +119,7 @@ String SmartRelay::_generateHTML() {
     file.close();
     std::map<String, String> variables = {
             {"PIN_NUMBER", String(this->_pin)},
-            {"ROUTE", this->_generateRoute()},
+            {"ROUTE", this->_settingsRoute},
             {"PIN_ENABLE", this->isPinEnabledSetting ? "checked" : ""},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
             {"MIN_ACTIVE_POWER", String(this->minPowerMeterActivePowerSetting)},
@@ -129,11 +130,11 @@ String SmartRelay::_generateHTML() {
 }
 
 void SmartRelay::_registerHttpRoutes() {
-    Serial.println(this->_generateRoute());
-    this->_httpServer->on(this->_generateRoute(), HTTP_GET, [this]() {
+    Serial.println(this->_settingsRoute);
+    this->_httpServer->on(this->_settingsRoute, HTTP_GET, [this]() {
         this->_httpServer->send(200, "text/html", this->_generateHTML());
     });
-    this->_httpServer->on(this->_generateRoute(), HTTP_POST, [this]() {
+    this->_httpServer->on(this->_settingsRoute, HTTP_POST, [this]() {
         this->setIsPinEnabledSetting(_httpServer->hasArg("pin-enable"));
         this->setMinBatteryChargeSetting((u_int16_t) this->_httpServer->arg("pin-battery").toInt());
         this->setMinPowerMeterActivePowerSetting((u_int32_t) this->_httpServer->arg("pin-active-power").toInt());
