@@ -124,14 +124,6 @@ void handlePostSettings() {
 
 void handleNotFound() { httpServer.send(404, "text/html", "<h1>404: Not found</h1>"); }
 
-void handlePin0Indicator() {
-    String pinIndicator = mySmartRelay.isPinOn
-                          ? R"(<div class="pin-indicator pin-active" hx-get="/data/pin0indicator" hx-trigger="every 10s" hx-swap="outerHTML"></div>)"
-                          : R"(<div class="pin-indicator" hx-get="/data/pin0indicator" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
-
-    httpServer.send(200, "text/html", pinIndicator);
-}
-
 void setup() {
     Serial.begin(115200);
     Serial.print("Firmware v");
@@ -180,7 +172,6 @@ void setup() {
     httpServer.on("/data/plantPower", HTTP_GET, handlePlantPower);
     httpServer.on("/data/powerMeterActivePower", HTTP_GET, handlePowerMeterActivePower);
     httpServer.on("/data/firmwareVersion", HTTP_GET, handleFirmwareVersion);
-    httpServer.on("/data/pin0indicator", HTTP_GET, handlePin0Indicator);
     httpServer.on("/settings", HTTP_GET, handleSettings);
     httpServer.on("/settings", HTTP_POST, handlePostSettings);
     httpServer.onNotFound(handleNotFound);

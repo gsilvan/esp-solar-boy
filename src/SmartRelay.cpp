@@ -8,6 +8,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_httpServer = nullptr;
     this->_preferencesNamespace = String("smart-relay") + String(this->_pin);
     this->_settingsRoute = this->_generateSettingsRoute();
+    this->_indicatorRoute = this->_generateIndicatorRoute();
 
     _preferences.begin(_preferencesNamespace.c_str(), false);
 
@@ -110,6 +111,10 @@ String SmartRelay::_generateSettingsRoute() {
     return String("/settings/pin/" + String(this->_pin));
 }
 
+String SmartRelay::_generateIndicatorRoute() {
+    return String(this->_settingsRoute + "/indicator");
+}
+
 String SmartRelay::_generateHTML() {
     File file = LittleFS.open("/pin.html", "r");
     if (!file) {
@@ -129,6 +134,15 @@ String SmartRelay::_generateHTML() {
     return processTemplate(templateContent, variables);
 }
 
+String SmartRelay::_generateIndicatorHTML() {
+    String templateContent = R"(<div class="pin-indicator {{PIN_ACTIVE}}" hx-get="{{ROUTE}}" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
+    std::map<String, String> variables = {
+            {"ROUTE",      this->_indicatorRoute},
+            {"PIN_ACTIVE", this->isPinOn ? "pin-active" : ""}
+    };
+    return processTemplate(templateContent, variables);
+}
+
 void SmartRelay::_registerHttpRoutes() {
     Serial.println(this->_settingsRoute);
     this->_httpServer->on(this->_settingsRoute, HTTP_GET, [this]() {
@@ -141,6 +155,9 @@ void SmartRelay::_registerHttpRoutes() {
         this->setMonitoringWindowMinutesSetting((u_int8_t) this->_httpServer->arg("pin-monitor-window").toInt());
         this->setSwitchCycleMinutesSetting((u_int8_t) this->_httpServer->arg("pin-switch-cycle").toInt());
         this->_httpServer->send(200, "text/html", "Saved 👍");
+    });
+    this->_httpServer->on(this->_indicatorRoute, HTTP_GET, [this]() {
+        this->_httpServer->send(200, "text/html", this->_generateIndicatorHTML());
     });
 }
 

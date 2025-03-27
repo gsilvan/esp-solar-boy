@@ -50,6 +50,7 @@ private:
     Preferences _preferences;
     String _preferencesNamespace;
     String _settingsRoute;
+    String _indicatorRoute;
 
     uint64_t _switchCycleMillis() const;
 
@@ -59,7 +60,11 @@ private:
 
     String _generateSettingsRoute();
 
+    String _generateIndicatorRoute();
+
     String _generateHTML();
+
+    String _generateIndicatorHTML();
 
     void _registerHttpRoutes();
 };
