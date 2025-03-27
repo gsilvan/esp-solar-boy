@@ -123,13 +123,13 @@ String SmartRelay::_generateHTML() {
     String templateContent = file.readString();
     file.close();
     std::map<String, String> variables = {
-            {"PIN_NUMBER", String(this->_pin)},
-            {"ROUTE", this->_settingsRoute},
-            {"PIN_ENABLE", this->isPinEnabledSetting ? "checked" : ""},
+            {"PIN_NUMBER",         String(this->_pin)},
+            {"ROUTE",              this->_settingsRoute},
+            {"PIN_ENABLE",         this->isPinEnabledSetting ? "checked" : ""},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
-            {"MIN_ACTIVE_POWER", String(this->minPowerMeterActivePowerSetting)},
-            {"MONITORING_WINDOW", String(this->monitoringWindowMinutesSetting)},
-            {"SWITCH_CYCLE", String(this->switchCycleMinutesSetting)},
+            {"MIN_ACTIVE_POWER",   String(this->minPowerMeterActivePowerSetting)},
+            {"MONITORING_WINDOW",  String(this->monitoringWindowMinutesSetting)},
+            {"SWITCH_CYCLE",       String(this->switchCycleMinutesSetting)},
     };
     return processTemplate(templateContent, variables);
 }
