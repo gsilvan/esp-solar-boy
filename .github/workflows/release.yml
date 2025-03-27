@@ -34,6 +34,9 @@ jobs:
       - name: Build PlatformIO Project
         run: pio run
 
+      - name: Build filesystem
+        run: pio run -t buildfs
+
       # Archive compiled binaries for upload
       - name: Prepare binaries
         run: |
