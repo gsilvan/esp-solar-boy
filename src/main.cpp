@@ -3,7 +3,6 @@
 #include <ESPAsyncDNSServer.h>
 #include <ESPAsyncWebServer.h>
 #include <ESP8266mDNS.h>
-#include <Preferences.h>
 #include <ESPAsyncHTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -16,14 +15,10 @@
 
 const char *dns_name = "solarboy";
 
-Preferences prefs;
 AsyncWebServer httpServer(80);
 AsyncDNSServer dnsServer;
 ESPAsync_WiFiManager wifiManager(&httpServer, &dnsServer);
 ESPAsyncHTTPUpdateServer updateServer;
-
-bool settings_enable_data_collection;
-String settings_data_collection_url;
 
 Inverter inverter;
 
@@ -41,16 +36,10 @@ void setup() {
     Serial.print("Firmware v");
     Serial.println(FIRMWARE_VERSION);
     wifiManager.autoConnect("esp-solar-boy", "changemeplease");
-
-    prefs.begin("esp-solar-boy");
-    settings_enable_data_collection = prefs.getBool("settings-enable-data-collection", false);
-    settings_data_collection_url = prefs.getString("settings-data-collection-url", "");
-
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
     }
-
     Serial.println("");
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
@@ -61,7 +50,7 @@ void setup() {
         Serial.println("http://" + String(dns_name) + ".local/");
     }
 
-    dc.setup(&inverter, settings_data_collection_url, "dev-device");
+    dc.setup(&inverter, "dev-device");
 
     if (!LittleFS.begin()) {
         Serial.println("LittleFS Mount Failed");
@@ -105,12 +94,12 @@ void setup() {
         request->send(200, "text/plain", String(inverter.modbusUnit));
     });
     httpServer.on("/getTelemetryCheckbox", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/html", settings_enable_data_collection
+        request->send(200, "text/html", dc.isEnabled
                                          ? R"(<input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" checked>)"
                                          : R"(<input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection">)");
     });
     httpServer.on("/getTelemetryUrl", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", String(settings_data_collection_url));
+        request->send(200, "text/plain", dc.url);
     });
     httpServer.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html");
@@ -121,13 +110,8 @@ void setup() {
             request->send(400, "application/html", "<h1>Bad request</h1>");
             return;
         }
-        settings_enable_data_collection = request->hasArg("enable-data-collection");
-        prefs.putBool("settings-enable-data-collection", settings_enable_data_collection);
-
-        settings_data_collection_url = (String) request->arg("data-collection-url");
-        prefs.putString("settings-data-collection-url", settings_data_collection_url);
-        dc.url = settings_data_collection_url;
-
+        dc.setIsEnabled(request->hasArg("enable-data-collection"));
+        dc.setUrl(request->arg("data-collection-url"));
         inverter.setIpAddress(request->arg("settings-inverter-ip"));
         inverter.setPort(request->arg("settings-inverter-port"));
         inverter.setModbusUnit(request->arg("settings-inverter-modbus-unit"));
@@ -154,8 +138,5 @@ void loop() {
     sm1.update();
     sm2.update();
 
-    if (settings_enable_data_collection) {
-        // Collect data with user consent
-        dc.loop();
-    }
+    dc.loop();
 }
