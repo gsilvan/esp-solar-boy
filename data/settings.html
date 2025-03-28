@@ -18,17 +18,18 @@
     <h2>Settings</h2>
     <div id="message"></div>
     <form method="post" hx-post="/settings" hx-target="#message" hx-swap="innerHTML">
-        <h2>Device</h2>
+        <h3>Inverter</h3>
         <div class="field">
-            <label for="settings-inverter-ip">Inverter IPv4:</label>
+            <label for="settings-inverter-ip">IPv4:</label>
             <input class="input" type="text" id="settings-inverter-ip" name="settings-inverter-ip" value="{{IP_ADDRESS}}">
         </div>
         <div class="field">
-            <label for="settings-inverter-port">Inverter Port:</label>
+            <label for="settings-inverter-port">Port:</label>
             <input class="input" type="number" min="0" max="65536" id="settings-inverter-port" name="settings-inverter-port" value="{{PORT}}">
         </div>
+        <h3>Telemetry</h3>
         <div class="field">
-            <label for="enable-data-collection">Telemetry:</label>
+            <label for="enable-data-collection">On:</label>
             <input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" {{DATA_COLLECTION}}>
         </div>
         <div class="field">
