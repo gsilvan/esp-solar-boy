@@ -4,14 +4,13 @@
 #include <Arduino.h>
 #include <IPAddress.h>
 #include <ModbusIP_ESP8266.h>
+#include <Preferences.h>
 
 class Inverter {
 public:
     Inverter();
 
     ~Inverter();
-
-    void begin(IPAddress ipAddress, in_port_t port = 502);
 
     bool update();
 
@@ -33,6 +32,12 @@ public:
 
     int meanPowerMeterActivePower(int lastNMinutes);
 
+    void setIpAddress(const IPAddress &ip);
+
+    void setIpAddress(const String &ip);
+
+    void setPort(in_port_t _port);
+
     IPAddress ipAddress;
     in_port_t port = 502;
     bool isConnected = false;
@@ -40,8 +45,9 @@ public:
     const uint64_t INVERTER_UPDATE_INTERVAL = 10000;
     const uint64_t HISTORY_UPDATE_INTERVAL = 10000;
 private:
-    uint64_t _lastUpdate = 0;
     ModbusIP _modbus;
+    Preferences _preferences;
+    uint64_t _lastUpdate = 0;
     uint16_t _batteryStateOfCharge = 0;
     int32_t _batteryChargePower = 0;
     int32_t _plantPower = 0;

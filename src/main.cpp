@@ -45,13 +45,6 @@ void setup() {
     settings_enable_data_collection = prefs.getBool("settings-enable-data-collection", false);
     settings_data_collection_url = prefs.getString("settings-data-collection-url", "");
 
-    /* Inverter Settings */
-    String inverter_ip_str = prefs.getString("settings-inverter-ip", "192.168.142.20");
-    inverter.ipAddress.fromString(inverter_ip_str);
-
-    IPAddress tempIpAdress;
-    tempIpAdress.fromString(inverter_ip_str);
-
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -67,7 +60,6 @@ void setup() {
         Serial.println("http://" + String(dns_name) + ".local/");
     }
 
-    inverter.begin(tempIpAdress);
     dc.setup(&inverter, settings_data_collection_url, "dev-device");
 
     if (!LittleFS.begin()) {
@@ -130,11 +122,8 @@ void setup() {
         prefs.putString("settings-data-collection-url", settings_data_collection_url);
         dc.url = settings_data_collection_url;
 
-        String new_inverter_ip_str = request->arg("settings-inverter-ip");
-        if (inverter.ipAddress.fromString(new_inverter_ip_str)) {
-            prefs.putString("settings-inverter-ip", inverter.ipAddress.toString());
-        }
-        request->send(200, "text/html", "Saved 👍");
+        inverter.setIpAddress(request->arg("settings-inverter-ip"));
+        request->send(200, "text/plain", "Saved 👍");
     });
 
     mySmartRelay.setup(&inverter, &httpServer);

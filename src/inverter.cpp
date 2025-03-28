@@ -1,15 +1,14 @@
 #include <numeric>
 #include "inverter.h"
 
-Inverter::Inverter() = default;
+Inverter::Inverter() {
+    this->_preferences.begin("inverter", false);
+    this->setIpAddress(this->_preferences.getString("ip", ""));
+    this->setPort(this->_preferences.getUShort("port", 502));
+    this->_modbus.client();
+};
 
 Inverter::~Inverter() = default;
-
-void Inverter::begin(IPAddress ipAddress, in_port_t port) {
-    this->ipAddress = ipAddress;
-    this->port = port;
-    this->_modbus.client();
-}
 
 bool Inverter::update() {
     uint64_t currentMillis = millis();
@@ -145,4 +144,20 @@ int Inverter::meanPowerMeterActivePower(int lastNMinutes) {
     double input_sum = std::accumulate(this->_powerMeterActivePowerHistory.end() - indexOffset,
                                        this->_powerMeterActivePowerHistory.end(), 0);
     return (int) (input_sum / this->_powerMeterActivePowerHistory.size());
+}
+
+void Inverter::setIpAddress(const IPAddress &ip) {
+    this->ipAddress = ip;
+    this->_preferences.putString("ip", this->ipAddress.toString());
+}
+
+void Inverter::setIpAddress(const String &ip) {
+    IPAddress _tempIp;
+    _tempIp.fromString(ip);
+    this->setIpAddress(_tempIp);
+}
+
+void Inverter::setPort(in_port_t _port) {
+    this->port = _port;
+    this->_preferences.putUShort("port", this->port);
 }
