@@ -40,8 +40,13 @@ public:
 
     void setPort(const String &_port);
 
+    void setModbusUnit(uint8_t _unit);
+
+    void setModbusUnit(const String &_unit);
+
     IPAddress ipAddress;
     in_port_t port = 502;
+    uint8_t modbusUnit = 0;
     bool isConnected = false;
     const uint16_t DEQUE_SIZE = 360;
     const uint64_t INVERTER_UPDATE_INTERVAL = 10000;
