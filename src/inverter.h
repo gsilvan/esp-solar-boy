@@ -46,7 +46,7 @@ public:
 
     IPAddress ipAddress;
     in_port_t port = 502;
-    uint8_t modbusUnit = 0;
+    uint8_t modbusUnit = 1;
     bool isConnected = false;
     const uint16_t DEQUE_SIZE = 360;
     const uint64_t INVERTER_UPDATE_INTERVAL = 10000;
