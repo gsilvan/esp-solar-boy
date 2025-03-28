@@ -20,12 +20,12 @@ bool Inverter::update() {
             this->_modbus.connect(this->ipAddress, this->port);
         } else {
             this->isConnected = true;
-            this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfCharge, 1, nullptr, 1);
-            this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePower, 2, nullptr, 1);
-            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPower, 2, nullptr, 1);
-            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatus, 1, nullptr, 1);
-            this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePower, 2, nullptr, 1);
-            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1, 1, nullptr, 1);
+            this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfCharge, 1, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePower, 2, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPower, 2, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatus, 1, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePower, 2, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1, 1, nullptr, this->modbusUnit);
         }
         this->_modbus.task();
         this->_lastUpdate = millis();
