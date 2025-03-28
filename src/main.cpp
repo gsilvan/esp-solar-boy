@@ -13,7 +13,6 @@
 #include "version.h"
 #include "data_collector.h"
 #include "SmartRelay.h"
-#include "template.h"
 
 const char *dns_name = "solarboy";
 
