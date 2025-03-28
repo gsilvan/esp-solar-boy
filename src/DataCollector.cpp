@@ -6,7 +6,7 @@ void DataCollector::setup(Inverter *inverter, const String &deviceId, uint64_t u
     this->_updateInterval = updateInterval;
 }
 
-void DataCollector::loop() {
+void DataCollector::update() {
     if (!this->isEnabled) {
         return;
     }

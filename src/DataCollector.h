@@ -18,7 +18,7 @@ public:
 
     void setup(Inverter *inverter, const String &deviceId, uint64_t updateInterval = 60000);
 
-    void loop();
+    void update();
 
     void setIsEnabled(bool value);
 

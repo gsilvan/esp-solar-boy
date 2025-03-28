@@ -138,5 +138,5 @@ void loop() {
     sm1.update();
     sm2.update();
 
-    dc.loop();
+    dc.update();
 }
