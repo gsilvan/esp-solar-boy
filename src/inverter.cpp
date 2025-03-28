@@ -102,7 +102,7 @@ String Inverter::getState1() const {
     }
 }
 
-void Inverter::_addToDeque(int value, std::deque<int> *dq) {
+void Inverter::_addToDeque(int value, std::deque<int> *dq) const {
     if (dq->size() >= this->DEQUE_SIZE) {
         dq->pop_front();
     }
@@ -125,7 +125,7 @@ void Inverter::_updateHistory() {
     }
 }
 
-int Inverter::_minutesToN(unsigned int minutes) {
+int Inverter::_minutesToN(unsigned int minutes) const {
     return 60000 * minutes / this->HISTORY_UPDATE_INTERVAL;
 }
 

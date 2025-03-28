@@ -65,13 +65,13 @@ private:
     std::deque<int> _powerMeterActivePowerHistory;
     std::deque<int> _batteryStateOfChargeHistory;
 
-    void _addToDeque(int value, std::deque<int> *dq);
+    void _addToDeque(int value, std::deque<int> *dq) const;
 
-    void _printDeque(std::deque<int> *dq);
+    static void _printDeque(std::deque<int> *dq);
 
     void _updateHistory();
 
-    int _minutesToN(unsigned int minutes);
+    int _minutesToN(unsigned int minutes) const;
 };
 
 #endif //ESP_SOLAR_BOY_INVERTER_H
