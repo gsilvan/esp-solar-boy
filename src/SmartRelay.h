@@ -39,7 +39,7 @@ public:
 
     const uint64_t UPDATE_INTERVAL = 1000;
     bool isPinOn = false;
-    bool isPinAlwaysOn = false;
+    bool isPinAlwaysOnSetting = false;
     bool isPinEnabledSetting = false;
     uint16_t minBatteryChargeSetting = 95;
     uint32_t minPowerMeterActivePowerSetting = 500;

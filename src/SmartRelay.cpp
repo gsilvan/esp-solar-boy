@@ -11,7 +11,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_indicatorRoute = this->_generateIndicatorRoute();
 
     this->_preferences.begin(_preferencesNamespace.c_str(), false);
-    this->isPinAlwaysOn = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
+    this->isPinAlwaysOnSetting = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
     this->minPowerMeterActivePowerSetting = _preferences.getULong(MIN_POWER_SETTING, 300);
     this->monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
@@ -28,12 +28,12 @@ void SmartRelay::update() {
     if (millis() - this->_lastUpdateTime < this->UPDATE_INTERVAL) {
         return;
     }
-    if (this->isPinAlwaysOn) {
-        this->_setPinOn();
-        return;
-    }
     if (!this->isPinEnabledSetting) {
         this->_setPinOff();
+        return;
+    }
+    if (this->isPinAlwaysOnSetting) {
+        this->_setPinOn();
         return;
     }
     if (!this->_inverter->isConnected) {
@@ -88,7 +88,7 @@ void SmartRelay::setIsPinEnabledSetting(bool value) {
 }
 
 void SmartRelay::setIsPinAlwaysOnSetting(bool value) {
-    this->isPinAlwaysOn = value;
+    this->isPinAlwaysOnSetting = value;
     this->_preferences.putBool(PIN_ALWAYS_ON_SETTING, value);
 }
 
@@ -131,7 +131,7 @@ String SmartRelay::_generateHTML() {
             {"PIN_NUMBER",         String(this->_pin)},
             {"ROUTE",              this->_settingsRoute},
             {"PIN_ENABLE",         this->isPinEnabledSetting ? "checked" : ""},
-            {"PIN_ALWAYS_ON",      this->isPinAlwaysOn ? "checked" : ""},
+            {"PIN_ALWAYS_ON",      this->isPinAlwaysOnSetting ? "checked" : ""},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
             {"MIN_ACTIVE_POWER",   String(this->minPowerMeterActivePowerSetting)},
             {"MONITORING_WINDOW",  String(this->monitoringWindowMinutesSetting)},
