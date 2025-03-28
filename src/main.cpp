@@ -104,6 +104,7 @@ void setup() {
         file.close();
         std::map<String, String> variables = {
                 {"IP_ADDRESS",          inverter.ipAddress.toString()},
+                {"PORT",                String(inverter.port)},
                 {"DATA_COLLECTION",     settings_enable_data_collection ? "checked" : ""},
                 {"DATA_COLLECTION_URL", String(settings_data_collection_url)},
         };
@@ -123,6 +124,7 @@ void setup() {
         dc.url = settings_data_collection_url;
 
         inverter.setIpAddress(request->arg("settings-inverter-ip"));
+        inverter.setPort(request->arg("settings-inverter-port"));
         request->send(200, "text/plain", "Saved 👍");
     });
 

@@ -24,6 +24,10 @@
             <input class="input" type="text" id="settings-inverter-ip" name="settings-inverter-ip" value="{{IP_ADDRESS}}">
         </div>
         <div class="field">
+            <label for="settings-inverter-port">Inverter Port:</label>
+            <input class="input" type="number" min="0" max="65536" id="settings-inverter-port" name="settings-inverter-port" value="{{PORT}}">
+        </div>
+        <div class="field">
             <label for="enable-data-collection">Telemetry:</label>
             <input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" {{DATA_COLLECTION}}>
         </div>

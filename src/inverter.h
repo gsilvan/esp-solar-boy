@@ -38,6 +38,8 @@ public:
 
     void setPort(in_port_t _port);
 
+    void setPort(const String &_port);
+
     IPAddress ipAddress;
     in_port_t port = 502;
     bool isConnected = false;

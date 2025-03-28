@@ -161,3 +161,7 @@ void Inverter::setPort(in_port_t _port) {
     this->port = _port;
     this->_preferences.putUShort("port", this->port);
 }
+
+void Inverter::setPort(const String &_port) {
+    this->setPort((in_port_t)_port.toInt());
+}
