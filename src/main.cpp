@@ -32,7 +32,9 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
-SmartRelay mySmartRelay(D1);
+SmartRelay sm0(D0);
+SmartRelay sm1(D1);
+SmartRelay sm2(D2);
 
 void setup() {
     Serial.begin(115200);
@@ -132,7 +134,9 @@ void setup() {
         request->send(200, "text/plain", "Saved 👍");
     });
 
-    mySmartRelay.setup(&inverter, &httpServer);
+    sm0.setup(&inverter, &httpServer);
+    sm1.setup(&inverter, &httpServer);
+    sm2.setup(&inverter, &httpServer);
     updateServer.setup(&httpServer);
     httpServer.begin();
     Serial.println("HTTP server started");
@@ -146,7 +150,9 @@ void loop() {
         lastInverterDataTimestamp = timeClient.getEpochTime();
     }
 
-    mySmartRelay.update();
+    sm0.update();
+    sm1.update();
+    sm2.update();
 
     if (settings_enable_data_collection) {
         // Collect data with user consent
