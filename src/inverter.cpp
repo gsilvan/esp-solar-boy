@@ -12,8 +12,7 @@ Inverter::Inverter() {
 Inverter::~Inverter() = default;
 
 bool Inverter::update() {
-    uint64_t currentMillis = millis();
-    if (currentMillis - this->_lastUpdate >= this->INVERTER_UPDATE_INTERVAL) {
+    if (millis() - this->_lastUpdate >= this->INVERTER_UPDATE_INTERVAL) {
         if (!this->_modbus.isConnected(this->ipAddress)) {
             this->isConnected = false;
             Serial.println("Inverter is disconnected!");
