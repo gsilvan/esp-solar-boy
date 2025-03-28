@@ -9,6 +9,7 @@
 #include "template.h"
 
 #define PIN_ENABLED_SETTING "pinEnabled"
+#define PIN_ALWAYS_ON_SETTING "pinAlwaysOn"
 #define MIN_BATTERY_SETTING "minBattery"
 #define MIN_POWER_SETTING "minPower"
 #define MONITOR_WINDOW_SETTING "monWindow"
@@ -25,6 +26,8 @@ public:
     void update();
 
     void setIsPinEnabledSetting(bool value);
+
+    void setIsPinAlwaysOnSetting(bool value);
 
     void setMinBatteryChargeSetting(uint16_t value);
 

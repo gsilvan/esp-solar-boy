@@ -12,6 +12,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
 
     _preferences.begin(_preferencesNamespace.c_str(), false);
 
+    this->isPinAlwaysOn = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
     minPowerMeterActivePowerSetting = _preferences.getULong(MIN_POWER_SETTING, 300);
     monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
@@ -87,6 +88,11 @@ void SmartRelay::setIsPinEnabledSetting(bool value) {
     this->_preferences.putBool(PIN_ENABLED_SETTING, value);
 }
 
+void SmartRelay::setIsPinAlwaysOnSetting(bool value) {
+    this->isPinAlwaysOn = value;
+    this->_preferences.putBool(PIN_ALWAYS_ON_SETTING, value);
+}
+
 void SmartRelay::setMinBatteryChargeSetting(uint16_t value) {
     this->minBatteryChargeSetting = value;
     this->_preferences.putUShort(MIN_BATTERY_SETTING, value);
@@ -126,6 +132,7 @@ String SmartRelay::_generateHTML() {
             {"PIN_NUMBER",         String(this->_pin)},
             {"ROUTE",              this->_settingsRoute},
             {"PIN_ENABLE",         this->isPinEnabledSetting ? "checked" : ""},
+            {"PIN_ALWAYS_ON",      this->isPinAlwaysOn ? "checked" : ""},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
             {"MIN_ACTIVE_POWER",   String(this->minPowerMeterActivePowerSetting)},
             {"MONITORING_WINDOW",  String(this->monitoringWindowMinutesSetting)},
@@ -152,6 +159,7 @@ void SmartRelay::_registerHttpRoutes() {
     });
     this->_httpServer->on(this->_settingsRoute.c_str(), HTTP_POST, [this](AsyncWebServerRequest *request) {
         this->setIsPinEnabledSetting(request->hasArg("pin-enable"));
+        this->setIsPinAlwaysOnSetting(request->hasArg("pin-always-on"));
         this->setMinBatteryChargeSetting((u_int16_t) request->arg("pin-battery").toInt());
         this->setMinPowerMeterActivePowerSetting((u_int32_t) request->arg("pin-active-power").toInt());
         this->setMonitoringWindowMinutesSetting((u_int8_t) request->arg("pin-monitor-window").toInt());
