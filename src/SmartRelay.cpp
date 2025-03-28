@@ -10,13 +10,12 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_settingsRoute = this->_generateSettingsRoute();
     this->_indicatorRoute = this->_generateIndicatorRoute();
 
-    _preferences.begin(_preferencesNamespace.c_str(), false);
-
+    this->_preferences.begin(_preferencesNamespace.c_str(), false);
     this->isPinAlwaysOn = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
-    minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
-    minPowerMeterActivePowerSetting = _preferences.getULong(MIN_POWER_SETTING, 300);
-    monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
-    switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
+    this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
+    this->minPowerMeterActivePowerSetting = _preferences.getULong(MIN_POWER_SETTING, 300);
+    this->monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
+    this->switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
 }
 
 void SmartRelay::setup(Inverter *inverter, AsyncWebServer *httpServer) {
