@@ -9,9 +9,9 @@
 #include <WiFiUdp.h>
 #include <LittleFS.h>
 
-#include "inverter.h"
+#include "Inverter.h"
 #include "version.h"
-#include "data_collector.h"
+#include "DataCollector.h"
 #include "SmartRelay.h"
 
 const char *dns_name = "solarboy";

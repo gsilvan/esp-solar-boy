@@ -5,7 +5,7 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
-#include "inverter.h"
+#include "Inverter.h"
 #include "template.h"
 
 #define PIN_ENABLED_SETTING "pinEnabled"

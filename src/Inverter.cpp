@@ -1,5 +1,5 @@
 #include <numeric>
-#include "inverter.h"
+#include "Inverter.h"
 
 Inverter::Inverter() {
     this->_preferences.begin("inverter", false);

@@ -1,6 +1,6 @@
-#ifndef ESP_SOLAR_BOY_DATA_COLLECTOR_H
-#define ESP_SOLAR_BOY_DATA_COLLECTOR_H
-#include "inverter.h"
+#ifndef ESP_SOLAR_BOY_DATACOLLECTOR_H
+#define ESP_SOLAR_BOY_DATACOLLECTOR_H
+#include "Inverter.h"
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
@@ -33,4 +33,4 @@ private:
 };
 
 
-#endif //ESP_SOLAR_BOY_DATA_COLLECTOR_H
+#endif //ESP_SOLAR_BOY_DATACOLLECTOR_H

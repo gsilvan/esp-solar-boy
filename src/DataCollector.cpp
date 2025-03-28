@@ -1,4 +1,4 @@
-#include "data_collector.h"
+#include "DataCollector.h"
 
 void
 DataCollector::setup(Inverter *inverter, String url, String deviceId, uint64_t updateInterval) {
