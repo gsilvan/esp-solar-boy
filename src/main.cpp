@@ -94,22 +94,26 @@ void setup() {
     httpServer.on("/data/firmwareVersion", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(FIRMWARE_VERSION));
     });
+    httpServer.on("/getInverterIp", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", String(inverter.ipAddress.toString()));
+    });
+    httpServer.on("/getInverterPort", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", String(inverter.port));
+    });
+    httpServer.on("/getInverterModbusUnit", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", String(inverter.modbusUnit));
+    });
+    httpServer.on("/getTelemetryCheckbox", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/html", settings_enable_data_collection
+                                         ? R"(<input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" checked>)"
+                                         : R"(<input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection">)");
+    });
+    httpServer.on("/getTelemetryUrl", HTTP_GET, [](AsyncWebServerRequest *request){
+        request->send(200, "text/plain", String(settings_data_collection_url));
+    });
     httpServer.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
-        File file = LittleFS.open("/settings.html", "r");
-        if (!file) {
-            request->send(404, "text/plain", "File Not Found");
-            return;
-        }
-        String templateContent = file.readString();
-        file.close();
-        std::map<String, String> variables = {
-                {"IP_ADDRESS",          inverter.ipAddress.toString()},
-                {"PORT",                String(inverter.port)},
-                {"DATA_COLLECTION",     settings_enable_data_collection ? "checked" : ""},
-                {"DATA_COLLECTION_URL", String(settings_data_collection_url)},
-        };
-        String html = processTemplate(templateContent, variables);
-        request->send(200, "text/html", html);
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html");
+        request->send(response);
     });
     httpServer.on("/settings", HTTP_POST, [](AsyncWebServerRequest *request){
         if (request->args() == 0) {
@@ -125,6 +129,7 @@ void setup() {
 
         inverter.setIpAddress(request->arg("settings-inverter-ip"));
         inverter.setPort(request->arg("settings-inverter-port"));
+        inverter.setModbusUnit(request->arg("settings-inverter-modbus-unit"));
         request->send(200, "text/plain", "Saved 👍");
     });
 

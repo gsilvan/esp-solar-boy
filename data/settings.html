@@ -21,21 +21,60 @@
         <h3>Inverter</h3>
         <div class="field">
             <label for="settings-inverter-ip">IPv4:</label>
-            <input class="input" type="text" id="settings-inverter-ip" name="settings-inverter-ip" value="{{IP_ADDRESS}}">
+            <input class="input"
+                   type="text"
+                   id="settings-inverter-ip"
+                   name="settings-inverter-ip"
+                   value=""
+                   hx-get="/getInverterIp"
+                   hx-trigger="load"
+                   hx-on::after-request="this.value = event.detail.xhr.responseText">
         </div>
         <div class="field">
             <label for="settings-inverter-port">Port:</label>
-            <input class="input" type="number" min="0" max="65536" id="settings-inverter-port" name="settings-inverter-port" value="{{PORT}}">
+            <input class="input"
+                   type="number"
+                   min="0"
+                   max="65536"
+                   id="settings-inverter-port"
+                   name="settings-inverter-port" value=""
+                   hx-get="/getInverterPort"
+                   hx-trigger="load"
+                   hx-on::after-request="this.value = event.detail.xhr.responseText">
+        </div>
+        <div class="field">
+            <label for="settings-inverter-modbus-modbusUnit">Modbus Unit:</label>
+            <input class="input"
+                   type="text"
+                   id="settings-inverter-modbus-modbusUnit"
+                   name="settings-inverter-modbus-modbusUnit"
+                   value=""
+                   hx-get="/getInverterModbusUnit"
+                   hx-trigger="load"
+                   hx-on::after-request="this.value = event.detail.xhr.responseText">
         </div>
         <h3>Telemetry</h3>
         <div class="field">
             <label for="enable-data-collection">On:</label>
-            <input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" {{DATA_COLLECTION}}>
+            <input class="input"
+                   type="checkbox"
+                   id="enable-data-collection"
+                   name="enable-data-collection"
+                   hx-get="/getTelemetryCheckbox"
+                   hx-trigger="load"
+                   hx-target="#enable-data-collection"
+                   hx-swap="outerHTML">
         </div>
         <div class="field">
             <label for="data-collection-url">URL:</label>
-            <input class="input" type="text" id="data-collection-url" name="data-collection-url"
-                   value="{{DATA_COLLECTION_URL}}">
+            <input class="input"
+                   type="text"
+                   id="data-collection-url"
+                   name="data-collection-url"
+                   value=""
+                   hx-get="/getTelemetryUrl"
+                   hx-trigger="load"
+                   hx-on::after-request="this.value = event.detail.xhr.responseText">
         </div>
         <h3>PINS</h3>
         <ul>
