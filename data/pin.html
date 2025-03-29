@@ -8,13 +8,18 @@
     <script src="../../htmx.min.js"></script>
 </head>
 <body>
-<main>
+<header>
+    <div class="logo-container">
+        <img class="logo" src="../../logo.svg" alt="ESP Solar Boy Logo">
+    </div>
     <h1>ESP Solar Boy</h1>
     <nav>
         <a href="/">Home</a>
         <a href="/settings">Settings</a>
         <a href="/update">Firmware</a>
     </nav>
+</header>
+<main>
     <h2>PIN Settings</h2>
     <div id="message"></div>
     <form method="post" hx-post="{{ROUTE}}" hx-target="#message" hx-swap="innerHTML">

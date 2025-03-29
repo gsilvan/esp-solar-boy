@@ -141,10 +141,11 @@ String SmartRelay::_generateHTML() {
 }
 
 String SmartRelay::_generateIndicatorHTML() {
-    String templateContent = R"(<div class="pin-indicator {{PIN_ACTIVE}}" hx-get="{{ROUTE}}" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
+    String templateContent = R"(<div class="relay-indicator {{PIN_ACTIVE}}" hx-get="{{ROUTE}}" hx-trigger="every 10s" hx-swap="outerHTML">{{ON_OFF}}</div>)";
     std::map<String, String> variables = {
             {"ROUTE",      this->_indicatorRoute},
-            {"PIN_ACTIVE", this->isPinOn ? "pin-active" : ""}
+            {"PIN_ACTIVE", this->isPinOn ? "relay-on" : ""},
+            {"ON_OFF",     this->isPinOn ? "on" : "off"},
     };
     return processTemplate(templateContent, variables);
 }

@@ -69,8 +69,23 @@ void setup() {
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/htmx.min.js", "application/javascript");
         request->send(response);
     });
+    httpServer.on("/logo.svg", HTTP_GET, [](AsyncWebServerRequest *request){
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/logo.svg", "image/svg+xml");
+        request->send(response);
+    });
     httpServer.on("/data/battery", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(inverter.getBatteryStateOfCharge()));
+    });
+    httpServer.on("/getBatteryLevel", HTTP_GET, [](AsyncWebServerRequest *request){
+        String html = R"(<div class="battery-level" style="width: {{BATTERY}}{{%}};" hx-get="/getBatteryLevel" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
+        html.replace("{{BATTERY}}", String(inverter.getBatteryStateOfCharge()));
+        html.replace("{{%}}", inverter.getBatteryStateOfCharge() > 0 ? "%" : "");
+        request->send(200, "text/html", html);
+    });
+    httpServer.on("/getPowerArrow", HTTP_GET, [](AsyncWebServerRequest * request) {
+       String html = R"(<div class="power-arrow {{DIRECTION}}" hx-get="/getPowerArrow" hx-trigger="every 10s" hx-swap="outerHTML"></div>)";
+       html.replace("{{DIRECTION}}", inverter.getBatteryChargePower() >= 0 ? "charging" : "discharging");
+       request->send(200, "text/html", html);
     });
     httpServer.on("/data/batteryChargeRate", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(inverter.getBatteryChargePower()));

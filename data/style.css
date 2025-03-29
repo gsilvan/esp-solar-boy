@@ -1,13 +1,238 @@
+:root {
+    --primary: #000000;
+    --secondary: #FF9800;
+    --background: #f5f5f5;
+    --text: #333;
+    --accent: #FFB74D;
+    --charging: #FF9800;
+    --discharging: #f44336;
+    --relay-on: #FF9800;
+    --relay-off: #757575;
+}
+
 body {
-    font-family: sans-serif;
+    font-family: Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem;
 }
-nav {
+
+header {
     display: flex;
-    column-gap: 8px;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 1.5rem;
 }
+
+.logo-container {
+    margin-bottom: 0.5rem;
+}
+
+.logo {
+    width: 80px;
+    height: 80px;
+}
+
+h1 {
+    margin: 0;
+    color: var(--primary);
+    font-size: 2rem;
+}
+
+nav {
+    margin: 1rem 0;
+}
+
+nav a {
+    margin: 0 0.5rem;
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
+main {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.relays {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    justify-content: center;
+    padding-top: 0.5rem;
+}
+
+.relay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 60px;
+}
+
+.relay-indicator {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-bottom: 0.5rem;
+    position: relative;
+    border: 2px solid #ccc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.7rem;
+    transition: all 0.3s ease;
+}
+
+.relay-on {
+    color: white;
+    background-color: var(--relay-on);
+    box-shadow: 0 0 10px var(--relay-on);
+    border-color: var(--relay-on);
+}
+
+.relay-off {
+    background-color: var(--relay-off);
+    box-shadow: none;
+    border-color: var(--relay-off);
+}
+
+.relay-label {
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.relay-status {
+    font-size: 0.8rem;
+    color: var(--text);
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.metric-card {
+    background-color: var(--background);
+    border-radius: 6px;
+    padding: 1rem;
+    position: relative;
+}
+
+.metric-card.large {
+    grid-column: span 2;
+}
+
+.metric-title {
+    font-size: 0.9rem;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary);
+}
+
+.battery-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.battery-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.battery-container {
+    position: relative;
+    width: 100%;
+    height: 24px;
+    background-color: #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0.5rem 0;
+}
+
+.battery-level {
+    height: 100%;
+    background-color: var(--secondary);
+    border-radius: 12px;
+    width: 0; /* set it with htmx  */
+    transition: width 1s ease;
+}
+
+.power-flow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.power-direction {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+.power-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin: 0 0.5rem;
+}
+
+.power-arrow.charging {
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 12px solid var(--charging);
+}
+
+.power-arrow.discharging {
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 12px solid var(--discharging);
+}
+
+.charging-text {
+    color: var(--charging);
+}
+
+.discharging-text {
+    color: var(--discharging);
+}
+
 footer {
-    border-top: 1px solid gray;
+    margin-top: 1.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #666;
+    padding-top: 1rem;
 }
+
+@media (max-width: 500px) {
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-card.large {
+        grid-column: span 1;
+    }
+}
+
 .field {
     margin-bottom: 12px;
 }
@@ -27,17 +252,4 @@ input {
 input[type="checkbox"] {
     width: auto;
     margin-left: 6px;
-}
-.pins {
-    display: flex;
-    column-gap: 20px;
-}
-.pin-indicator {
-    width: 23px;
-    height: 23px;
-    border-radius: 50px;
-    background-color: gray;
-}
-.pin-active {
-    background-color: seagreen;
 }

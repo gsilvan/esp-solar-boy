@@ -8,44 +8,63 @@
     <script src="htmx.min.js"></script>
 </head>
 <body>
-<main>
+<header>
+    <div class="logo-container">
+        <img class="logo" src="logo.svg" alt="ESP Solar Boy Logo">
+    </div>
     <h1>ESP Solar Boy</h1>
     <nav>
         <a href="/">Home</a>
         <a href="/settings">Settings</a>
         <a href="/update">Firmware</a>
     </nav>
-    <h2>Dashboard</h2>
-    <div class="pins">
-        <div id="pin0">
-            <span>D0</span>
-            <div class="pin-indicator"
-                 hx-get="/pin/16/indicator"
-                 hx-trigger="load, every 10s"
-                 hx-swap="outerHTML">
-            </div>
+</header>
+<main>
+    <div class="relays">
+        <div class="relay">
+            <div class="relay-indicator" hx-get="/pin/16/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">on</div>
+            <div class="relay-label">D0</div>
+            <div class="relay-status"></div>
         </div>
-        <div id="pin1">
-            <span>D1</span>
-            <div class="pin-indicator"
-                 hx-get="/pin/5/indicator"
-                 hx-trigger="load, every 10s"
-                 hx-swap="outerHTML">
-            </div>
+        <div class="relay">
+            <div class="relay-indicator" hx-get="/pin/5/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">off</div>
+            <div class="relay-label">D1</div>
+            <div class="relay-status"></div>
         </div>
-        <div id="pin2">
-            <span>D2</span>
-            <div class="pin-indicator"
-                 hx-get="/pin/4/indicator"
-                 hx-trigger="load, every 10s"
-                 hx-swap="outerHTML">
-            </div>
+        <div class="relay">
+            <div class="relay-indicator" hx-get="/pin/4/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">off</div>
+            <div class="relay-label">D2</div>
+            <div class="relay-status"></div>
         </div>
     </div>
-    <p>Battery: <span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> %</p>
-    <p>Battery charge rate: <span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
-    <p>Plant power: <span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
-    <p>Power meter active power: <span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</p>
+
+    <div class="metrics">
+        <div class="metric-card large">
+            <div class="metric-title">Battery & charging power</div>
+            <div class="battery-section">
+                <div class="battery-info">
+                    <div class="metric-value"><span id="battery" hx-get="/data/battery" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> %</div>
+                    <div class="power-direction">
+                        <div class="power-arrow" hx-get="/getPowerArrow" hx-trigger="load, every 10s" hx-swap="outerHTML"></div>
+                        <span class="charging-text"><span id="battery-charge-rate" hx-get="/data/batteryChargeRate" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</span>
+                    </div>
+                </div>
+                <div class="battery-container">
+                    <div class="battery-level" style="width: 0;" hx-get="/getBatteryLevel" hx-trigger="load, every 10s" hx-swap="outerHTML"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">Solar plant power output</div>
+            <div class="metric-value"><span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</div>
+        </div>
+
+        <div class="metric-card">
+            <div class="metric-title">Power meter</div>
+            <div class="metric-value"><span id="grid-feed" hx-get="/data/powerMeterActivePower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</div>
+        </div>
+    </div>
 </main>
 <footer>
     <span>Version: </span><a href="https://github.com/gsilvan/esp-solar-boy/releases" hx-get="/data/firmwareVersion" hx-trigger="load" hx-swap="innerHTML"></a>
