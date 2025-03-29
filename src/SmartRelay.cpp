@@ -11,6 +11,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_indicatorRoute = this->_generateIndicatorRoute();
 
     this->_preferences.begin(_preferencesNamespace.c_str(), false);
+    this->isPinEnabledSetting = _preferences.getBool(PIN_ENABLED_SETTING, false);
     this->isPinAlwaysOnSetting = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
     this->minPowerMeterActivePowerSetting = _preferences.getULong(MIN_POWER_SETTING, 300);
