@@ -5,7 +5,7 @@ Inverter::Inverter() {
     this->_preferences.begin("inverter", false);
     this->setIpAddress(this->_preferences.getString("ip", ""));
     this->setPort(this->_preferences.getUShort("port", 502));
-    this->setModbusUnit(this->_preferences.getUShort("unit", 1));
+    this->setModbusUnit(this->_preferences.getUChar("unit", 1));
     this->_modbus.client();
 };
 
@@ -168,6 +168,7 @@ void Inverter::setPort(const String &_port) {
 
 void Inverter::setModbusUnit(uint8_t _unit) {
     this->modbusUnit = _unit;
+    this->_preferences.putUChar("unit", _unit);
 }
 
 void Inverter::setModbusUnit(const String &_unit) {
