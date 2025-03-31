@@ -55,8 +55,8 @@ void Inverter::printy() {
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
     Serial.printf("State1: %s\n", this->getState1().c_str());
     Serial.printf("State1 RAW: %d\n", this->_state1);
-    this->_printDeque(&this->_powerMeterActivePowerHistory);
-    this->_printDeque(&this->_batteryStateOfChargeHistory);
+    Inverter::_printDeque(&this->_powerMeterActivePowerHistory);
+    Inverter::_printDeque(&this->_batteryStateOfChargeHistory);
 }
 
 int32_t Inverter::getPowerMeterActivePower() const {
