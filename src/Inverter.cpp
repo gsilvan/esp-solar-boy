@@ -148,7 +148,7 @@ int Inverter::meanPowerMeterActivePower(int lastNMinutes) {
     int indexOffset = this->_minutesToN(lastNMinutes);
     double input_sum = std::accumulate(this->_powerMeterActivePowerHistory.end() - indexOffset,
                                        this->_powerMeterActivePowerHistory.end(), 0);
-    return (int) (input_sum / this->_powerMeterActivePowerHistory.size());
+    return (int) (input_sum / indexOffset);
 }
 
 void Inverter::setIpAddress(const IPAddress &ip) {
