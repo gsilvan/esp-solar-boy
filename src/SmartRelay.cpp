@@ -38,17 +38,22 @@ void SmartRelay::update() {
         return;
     }
     if (!this->_inverter->isConnected) {
+        Serial.printf("[%d] OFF (Inverter not connected)\n", this->_pin);
         this->_setPinOff();
         return;
     }
+    Serial.printf("minBattery: %d\n", this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting));
+    Serial.printf("meanActPwr: %d\n", this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting));
     if (this->isPinOn && (millis() - this->_lastEnableTime < this->_switchCycleMillis())) {
         // If relay is on and our switch cycle is running we do nothing in this update loop
+        Serial.printf("[%d] ON (Holding switch cycle)\n", this->_pin);
         this->_lastUpdateTime = millis();
         return;
     }
     if (this->isPinOn) {
         if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= (int) this->minBatteryChargeSetting) &&
             (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= 100)) {
+            Serial.printf("[%d] ON (Pin was on, active power still > 100 Watts)\n", this->_pin);
             this->_setPinOn();
             return;
         }
@@ -56,6 +61,7 @@ void SmartRelay::update() {
     if (!this->isPinOn) {
         if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= (int) this->minBatteryChargeSetting) &&
             (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= (int) this->minPowerMeterActivePowerSetting)) {
+            Serial.printf("[%d] ON (Pin was off, active power > %d Watts)\n", this->_pin, this->minPowerMeterActivePowerSetting);
             this->_setPinOn();
             return;
         }
@@ -80,7 +86,7 @@ void SmartRelay::_setPinOff() {
     digitalWrite(this->_pin, LOW);
     this->_lastEnableTime = 0;
     this->_lastUpdateTime = millis();
-    Serial.println("Set pin OFF!");
+/*    Serial.println("Set pin OFF!");*/
 }
 
 void SmartRelay::setIsPinEnabledSetting(bool value) {
