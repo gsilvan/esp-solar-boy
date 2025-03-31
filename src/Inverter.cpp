@@ -1,7 +1,9 @@
 #include <numeric>
 #include "Inverter.h"
 
-Inverter::Inverter() {
+Inverter::Inverter() :
+        _powerMeterActivePowerHistory(DEQUE_SIZE, 0),
+        _batteryStateOfChargeHistory(DEQUE_SIZE, 0) {
     this->_preferences.begin("inverter", false);
     this->setIpAddress(this->_preferences.getString("ip", ""));
     this->setPort(this->_preferences.getUShort("port", 502));
@@ -109,6 +111,9 @@ void Inverter::_addToDeque(int value, std::deque<int> *dq) const {
 }
 
 void Inverter::_printDeque(std::deque<int> *dq) {
+    if (!dq) {
+        return;
+    }
     for (auto val: *dq) {
         Serial.print(val);
         Serial.print(" ");
