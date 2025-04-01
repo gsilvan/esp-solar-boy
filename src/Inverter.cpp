@@ -21,12 +21,12 @@ bool Inverter::update() {
             this->_modbus.connect(this->ipAddress, this->port);
         } else {
             this->isConnected = true;
-            this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfCharge, 1, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePower, 2, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPower, 2, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatus, 1, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePower, 2, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1, 1, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfChargeRaw, 1, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePowerRaw, 2, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPowerRaw, 2, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatusRaw, 1, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePowerRaw, 2, nullptr, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1Raw, 1, nullptr, this->modbusUnit);
         }
         this->_modbus.task();
         this->_lastUpdate = millis();
@@ -38,15 +38,15 @@ bool Inverter::update() {
 }
 
 uint16_t Inverter::getBatteryStateOfCharge() const {
-    return this->_batteryStateOfCharge / 10;
+    return this->_batteryStateOfChargeRaw / 10;
 }
 
 int32_t Inverter::getBatteryChargePower() const {
-    return (this->_batteryChargePower >> 16) | (this->_batteryChargePower << 16);
+    return (int32_t) (_batteryChargePowerRaw[0] << 16 | _batteryChargePowerRaw[1]);
 }
 
 int32_t Inverter::getPlantPower() const {
-    return (this->_plantPower >> 16) | (this->_plantPower << 16);
+    return (int32_t) (_plantPowerRaw[0] << 16 | _plantPowerRaw[1]);
 }
 
 void Inverter::printy() {
@@ -56,17 +56,17 @@ void Inverter::printy() {
     Serial.printf("Power meter status: %s\n", this->getMeterStatus().c_str());
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
     Serial.printf("State1: %s\n", this->getState1().c_str());
-    Serial.printf("State1 RAW: %d\n", this->_state1);
+    Serial.printf("State1 RAW: %d\n", this->_state1Raw);
     Inverter::_printDeque(&this->_powerMeterActivePowerHistory);
     Inverter::_printDeque(&this->_batteryStateOfChargeHistory);
 }
 
 int32_t Inverter::getPowerMeterActivePower() const {
-    return (this->_powerMeterActivePower >> 16) | (this->_powerMeterActivePower << 16);
+    return (int32_t) (this->_powerMeterActivePowerRaw[0] << 16 | this->_powerMeterActivePowerRaw[1]);
 }
 
 String Inverter::getMeterStatus() const {
-    switch (this->_meterStatus) {
+    switch (this->_meterStatusRaw) {
         case 0:
             return "offline";
         case 1:
@@ -77,7 +77,7 @@ String Inverter::getMeterStatus() const {
 }
 
 String Inverter::getState1() const {
-    switch (this->_state1) {
+    switch (this->_state1Raw) {
         case 0b0000000001:
             return "standby";
         case 0b0000000010:

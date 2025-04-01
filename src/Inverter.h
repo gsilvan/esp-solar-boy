@@ -1,5 +1,6 @@
 #ifndef ESP_SOLAR_BOY_INVERTER_H
 #define ESP_SOLAR_BOY_INVERTER_H
+
 #include <deque>
 #include <Arduino.h>
 #include <IPAddress.h>
@@ -55,12 +56,12 @@ private:
     ModbusIP _modbus;
     Preferences _preferences;
     uint64_t _lastUpdate = 0;
-    uint16_t _batteryStateOfCharge = 0;
-    int32_t _batteryChargePower = 0;
-    int32_t _plantPower = 0;
-    int32_t _powerMeterActivePower = 0;
-    uint16_t _meterStatus = 0;
-    uint16_t _state1 = 0;
+    uint16_t _batteryStateOfChargeRaw = 0;
+    uint16_t _batteryChargePowerRaw[2] = {0, 0};
+    uint16_t _plantPowerRaw[2] = {0, 0};
+    uint16_t _powerMeterActivePowerRaw[2] = {0, 0};
+    uint16_t _meterStatusRaw = 0;
+    uint16_t _state1Raw = 0;
     uint64_t _lastHistoryUpdate = 0;
     std::deque<int> _powerMeterActivePowerHistory;
     std::deque<int> _batteryStateOfChargeHistory;
