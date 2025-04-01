@@ -22,19 +22,25 @@
 <main>
     <div class="relays">
         <div class="relay">
-            <div class="relay-indicator" hx-get="/pin/16/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">on</div>
-            <div class="relay-label">D0</div>
-            <div class="relay-status"></div>
+            <a href="/pin/16" class="relay-link">
+                <div class="relay-indicator" hx-get="/pin/16/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">on</div>
+                <div class="relay-label">D0</div>
+                <div class="relay-status"></div>
+            </a>
         </div>
         <div class="relay">
-            <div class="relay-indicator" hx-get="/pin/5/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">off</div>
-            <div class="relay-label">D1</div>
-            <div class="relay-status"></div>
+            <a href="/pin/5" class="relay-link">
+                <div class="relay-indicator" hx-get="/pin/5/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">off</div>
+                <div class="relay-label">D1</div>
+                <div class="relay-status"></div>
+            </a>
         </div>
         <div class="relay">
-            <div class="relay-indicator" hx-get="/pin/4/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">off</div>
-            <div class="relay-label">D2</div>
-            <div class="relay-status"></div>
+            <a href="/pin/4" class="relay-link">
+                <div class="relay-indicator" hx-get="/pin/4/indicator" hx-trigger="load, every 10s" hx-swap="outerHTML">off</div>
+                <div class="relay-label">D2</div>
+                <div class="relay-status"></div>
+            </a>
         </div>
     </div>
 

@@ -78,6 +78,25 @@ main {
     width: 60px;
 }
 
+.relay-link {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.relay-link:hover::after {
+    opacity: 1;
+}
+
+.relay-link:hover .relay-indicator {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px var(--accent);
+}
+
 .relay-indicator {
     width: 40px;
     height: 40px;
