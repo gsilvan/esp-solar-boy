@@ -64,6 +64,10 @@
         <div class="metric-card">
             <div class="metric-title">Solar plant power output</div>
             <div class="metric-value"><span id="plant-power" hx-get="/data/plantPower" hx-trigger="load, every 10s" hx-swap="innerHTML">...</span> W</div>
+            <div class="connection-status" hx-get="/getConnectionStatus" hx-trigger="load, every 10s" hx-swap="innerHTML">
+                <div class="connection-indicator disconnected"></div>
+                <div class="connection-text disconnected-text">Sun2000 disconnected</div>
+            </div>
         </div>
 
         <div class="metric-card">

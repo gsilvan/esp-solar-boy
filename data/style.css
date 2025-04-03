@@ -8,6 +8,8 @@
     --discharging: #f44336;
     --relay-on: #FF9800;
     --relay-off: #757575;
+    --connected: #FF9800;
+    --disconnected: #f44336;
 }
 
 body {
@@ -232,6 +234,56 @@ main {
 
 .discharging-text {
     color: var(--discharging);
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #ddd;
+}
+
+.connection-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.connected {
+    background-color: var(--connected);
+    box-shadow: 0 0 5px var(--connected);
+    animation: pulse 2s infinite;
+}
+
+.disconnected {
+    background-color: var(--disconnected);
+}
+
+.connection-text {
+    font-size: 0.8rem;
+}
+
+.connected-text {
+    color: var(--connected);
+}
+
+.disconnected-text {
+    color: var(--disconnected);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(255, 152, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 152, 0, 0);
+    }
 }
 
 footer {

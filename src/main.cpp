@@ -116,6 +116,11 @@ void setup() {
     httpServer.on("/getTelemetryUrl", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", dc.url);
     });
+    httpServer.on("/getConnectionStatus", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(200, "text/plain", inverter.isConnected
+                                         ? R"(<div class="connection-indicator connected"></div><div class="connection-text connected-text">Sun2000 connected</div>)"
+                                         : R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Sun2000 disconnected</div>)");
+    });
     httpServer.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html");
         request->send(response);
