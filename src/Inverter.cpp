@@ -21,12 +21,18 @@ bool Inverter::update() {
             this->_modbus.connect(this->ipAddress, this->port);
         } else {
             this->isConnected = true;
-            this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfChargeRaw, 1, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePowerRaw, 2, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPowerRaw, 2, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatusRaw, 1, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePowerRaw, 2, nullptr, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1Raw, 1, nullptr, this->modbusUnit);
+            auto cb = [this](Modbus::ResultCode event, uint16_t transactionId, void* data) -> bool {
+                if (event != Modbus::EX_SUCCESS) {
+                    Serial.printf("Modbus error [%d]: %02X\n", transactionId, event);
+                }
+                return true;
+            };
+            this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfChargeRaw, 1, cb, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePowerRaw, 2, cb, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPowerRaw, 2, cb, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatusRaw, 1,cb, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePowerRaw, 2, cb, this->modbusUnit);
+            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1Raw, 1,cb, this->modbusUnit);
         }
         this->_modbus.task();
         this->_lastUpdate = millis();
