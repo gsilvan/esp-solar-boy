@@ -21,9 +21,15 @@ bool Inverter::update() {
             this->_modbus.connect(this->ipAddress, this->port);
         } else {
             this->isConnected = true;
-            auto cb = [this](Modbus::ResultCode event, uint16_t transactionId, void* data) -> bool {
+            auto cb = [this](Modbus::ResultCode event, uint16_t transactionId, void *data) -> bool {
+                // Modified example:
+                // https://github.com/emelianov/modbus-esp8266/blob/master/examples/Callback/Transactional/Transactional.ino#L40-L48
                 if (event != Modbus::EX_SUCCESS) {
                     Serial.printf("Modbus error [%d]: %02X\n", transactionId, event);
+                }
+                if (event == Modbus::EX_TIMEOUT) {
+                    this->_modbus.disconnect(this->ipAddress);
+                    this->_modbus.dropTransactions();
                 }
                 return true;
             };
