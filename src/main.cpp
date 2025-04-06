@@ -73,6 +73,10 @@ void setup() {
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/logo.svg", "image/svg+xml");
         request->send(response);
     });
+    httpServer.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/favicon.ico", "image/x-icon");
+        request->send(response);
+    });
     httpServer.on("/data/battery", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(inverter.getBatteryStateOfCharge()));
     });
