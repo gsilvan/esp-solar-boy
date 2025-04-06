@@ -25,9 +25,11 @@ jobs:
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
@@ -37,16 +39,25 @@ jobs:
       - name: Build filesystem
         run: pio run -t buildfs
 
-      # Archive compiled binaries for upload
       - name: Prepare binaries
         run: |
           mkdir -p binaries
-          cp .pio/build/*/*.bin binaries/ || true # Adjust file extension or paths if needed
+          cp .pio/build/*/*.bin binaries/ || true
 
-      # Upload binaries to GitHub release
+      - name: Sign firmware with ECDSA
+        run: |
+          echo "$FW_SIGNING_KEY" > ec_private.pem
+          for fw in binaries/*.bin; do
+            echo "Signing $fw"
+            openssl dgst -sha256 -sign ec_private.pem -out "${fw}.sig" "$fw"
+          done
+          rm ec_private.pem
+        env:
+          FW_SIGNING_KEY: ${{ secrets.FW_SIGNING_KEY }}
+
       - name: Create Release and Upload Assets
         uses: softprops/action-gh-release@v2
         with:
-          files: binaries/*.bin
+          files: binaries/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
