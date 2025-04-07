@@ -35,7 +35,7 @@ void setup() {
     Serial.begin(115200);
     Serial.print("Firmware v");
     Serial.println(FIRMWARE_VERSION);
-    wifiManager.autoConnect("esp-solar-boy", "changemeplease");
+    wifiManager.autoConnect("esp-solar-boy");
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
