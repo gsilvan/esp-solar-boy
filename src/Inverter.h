@@ -23,10 +23,6 @@ public:
 
     [[nodiscard]] int32_t getPowerMeterActivePower() const;
 
-    [[nodiscard]] String getMeterStatus() const;
-
-    [[nodiscard]] String getState1() const;
-
     void printy();
 
     int minBatteryStateOfCharge(int lastNMinutes);
@@ -60,8 +56,6 @@ private:
     uint16_t _batteryChargePowerRaw[2] = {0, 0};
     uint16_t _plantPowerRaw[2] = {0, 0};
     uint16_t _powerMeterActivePowerRaw[2] = {0, 0};
-    uint16_t _meterStatusRaw = 0;
-    uint16_t _state1Raw = 0;
     uint64_t _lastHistoryUpdate = 0;
     std::deque<int> _powerMeterActivePowerHistory;
     std::deque<int> _batteryStateOfChargeHistory;

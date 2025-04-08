@@ -36,9 +36,7 @@ bool Inverter::update() {
             this->_modbus.readHreg(this->ipAddress, 37004, (uint16_t *) &this->_batteryStateOfChargeRaw, 1, cb, this->modbusUnit);
             this->_modbus.readHreg(this->ipAddress, 37001, (uint16_t *) &this->_batteryChargePowerRaw, 2, cb, this->modbusUnit);
             this->_modbus.readHreg(this->ipAddress, 32064, (uint16_t *) &this->_plantPowerRaw, 2, cb, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 37100, (uint16_t *) &this->_meterStatusRaw, 1,cb, this->modbusUnit);
             this->_modbus.readHreg(this->ipAddress, 37113, (uint16_t *) &this->_powerMeterActivePowerRaw, 2, cb, this->modbusUnit);
-            this->_modbus.readHreg(this->ipAddress, 32000, (uint16_t *) &this->_state1Raw, 1,cb, this->modbusUnit);
         }
         this->_modbus.task();
         this->_lastUpdate = millis();
@@ -65,54 +63,13 @@ void Inverter::printy() {
     Serial.printf("Battery: %d\n", this->getBatteryStateOfCharge());
     Serial.printf("Battery charge power: %d\n", this->getBatteryChargePower());
     Serial.printf("Plant power: %d\n", this->getPlantPower());
-    Serial.printf("Power meter status: %s\n", this->getMeterStatus().c_str());
     Serial.printf("Power meter active power: %d\n", this->getPowerMeterActivePower());
-    Serial.printf("State1: %s\n", this->getState1().c_str());
-    Serial.printf("State1 RAW: %d\n", this->_state1Raw);
     Inverter::_printDeque(&this->_powerMeterActivePowerHistory);
     Inverter::_printDeque(&this->_batteryStateOfChargeHistory);
 }
 
 int32_t Inverter::getPowerMeterActivePower() const {
     return (int32_t) (this->_powerMeterActivePowerRaw[0] << 16 | this->_powerMeterActivePowerRaw[1]);
-}
-
-String Inverter::getMeterStatus() const {
-    switch (this->_meterStatusRaw) {
-        case 0:
-            return "offline";
-        case 1:
-            return "normal";
-        default:
-            return "";
-    }
-}
-
-String Inverter::getState1() const {
-    switch (this->_state1Raw) {
-        case 0b0000000001:
-            return "standby";
-        case 0b0000000010:
-            return "grid-connected";
-        case 0b0000000100:
-            return "grid-connected normally";
-        case 0b0000001000:
-            return "grid connection with derating due to power rationing";
-        case 0b0000010000:
-            return "grid connection with derating due to internal causes of the solar inverter";
-        case 0b0000100000:
-            return "normal stop";
-        case 0b0001000000:
-            return "stop due to faults";
-        case 0b0010000000:
-            return "stop due to power rationing";
-        case 0b0100000000:
-            return "shutdown";
-        case 0b1000000000:
-            return "spot check";
-        default:
-            return "";
-    }
 }
 
 void Inverter::_addToDeque(int value, std::deque<int> *dq) const {
