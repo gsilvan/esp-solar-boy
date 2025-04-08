@@ -12,6 +12,7 @@
 #include "version.h"
 #include "DataCollector.h"
 #include "SmartRelay.h"
+#include "LatestRelease.h"
 
 const char *dns_name = "solarboy";
 
@@ -30,6 +31,8 @@ DataCollector dc;
 SmartRelay sm0(D0);
 SmartRelay sm1(D1);
 SmartRelay sm2(D2);
+
+LatestRelease latestRelease;
 
 void setup() {
     Serial.begin(115200);
@@ -148,6 +151,9 @@ void setup() {
     updateServer.setup(&httpServer);
     httpServer.begin();
     Serial.println("HTTP server started");
+
+    latestRelease.searchForNewerFirmware = false;
+    latestRelease.automaticFirmwareInstall = false;
 }
 
 void loop() {
@@ -163,4 +169,6 @@ void loop() {
     sm2.update();
 
     dc.update();
+
+    latestRelease.check();
 }
