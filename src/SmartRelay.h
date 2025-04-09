@@ -31,7 +31,7 @@ public:
 
     void setMinBatteryChargeSetting(uint16_t value);
 
-    void setMinPowerMeterActivePowerSetting(uint32_t value);
+    void setMinPowerMeterActivePowerSetting(int32_t value);
 
     void setMonitoringWindowMinutesSetting(uint8_t value);
 
@@ -42,7 +42,7 @@ public:
     bool isPinAlwaysOnSetting = false;
     bool isPinEnabledSetting = false;
     uint16_t minBatteryChargeSetting = 95;
-    uint32_t minPowerMeterActivePowerSetting = 500;
+    int32_t minPowerMeterActivePowerSetting = 300;
     uint8_t monitoringWindowMinutesSetting = 1;
     uint8_t switchCycleMinutesSetting = 1;
 private:
