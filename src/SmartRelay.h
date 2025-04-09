@@ -11,7 +11,7 @@
 #define PIN_ENABLED_SETTING "pinEnabled"
 #define PIN_ALWAYS_ON_SETTING "pinAlwaysOn"
 #define MIN_BATTERY_SETTING "minBattery"
-#define MIN_POWER_SETTING "minPower"
+#define MIN_ACTIVE_POWER_SETTING "minPower"
 #define MONITOR_WINDOW_SETTING "monWindow"
 #define SWITCH_CYCLE_SETTING "switchCycle"
 

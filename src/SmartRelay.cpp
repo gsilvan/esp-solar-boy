@@ -14,7 +14,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->isPinEnabledSetting = _preferences.getBool(PIN_ENABLED_SETTING, false);
     this->isPinAlwaysOnSetting = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
-    this->minPowerMeterActivePowerSetting = _preferences.getInt(MIN_POWER_SETTING, 300);
+    this->minPowerMeterActivePowerSetting = _preferences.getInt(MIN_ACTIVE_POWER_SETTING, 300);
     this->monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
     this->switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
 }
@@ -106,7 +106,7 @@ void SmartRelay::setMinBatteryChargeSetting(uint16_t value) {
 
 void SmartRelay::setMinPowerMeterActivePowerSetting(int32_t value) {
     this->minPowerMeterActivePowerSetting = value;
-    this->_preferences.putInt(MIN_POWER_SETTING, value);
+    this->_preferences.putInt(MIN_ACTIVE_POWER_SETTING, value);
 }
 
 void SmartRelay::setMonitoringWindowMinutesSetting(uint8_t value) {
