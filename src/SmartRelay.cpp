@@ -168,7 +168,7 @@ void SmartRelay::_registerHttpRoutes() {
         this->setIsPinEnabledSetting(request->hasArg("pin-enable"));
         this->setIsPinAlwaysOnSetting(request->hasArg("pin-always-on"));
         this->setMinBatteryChargeSetting((u_int16_t) request->arg("pin-battery").toInt());
-        this->setMinPowerMeterActivePowerSetting((u_int32_t) request->arg("pin-active-power").toInt());
+        this->setMinPowerMeterActivePowerSetting((int32_t) request->arg("pin-active-power").toInt());
         this->setMonitoringWindowMinutesSetting((u_int8_t) request->arg("pin-monitor-window").toInt());
         this->setSwitchCycleMinutesSetting((u_int8_t) request->arg("pin-switch-cycle").toInt());
         request->send(200, "text/plain", "Saved 👍");
