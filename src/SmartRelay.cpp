@@ -14,6 +14,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->isPinEnabledSetting = _preferences.getBool(PIN_ENABLED_SETTING, false);
     this->isPinAlwaysOnSetting = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
+    this->minPlantPowerSetting = _preferences.getUInt(MIN_PLANT_POWER_SETTING, 0);
     this->minPowerMeterActivePowerSetting = _preferences.getInt(MIN_ACTIVE_POWER_SETTING, 300);
     this->monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
     this->switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
@@ -48,6 +49,14 @@ void SmartRelay::update() {
         // If relay is on and our switch cycle is running we do nothing in this update loop
         Serial.printf("[%d] ON (Holding switch cycle)\n", this->_pin);
         this->_lastUpdateTime = millis();
+        return;
+    }
+    if (this->_inverter->getPlantPower() < this->minPlantPowerSetting) {
+        Serial.printf("[%d] OFF (Plant power smaller than threshold %d < %u)\n",
+                      this->_pin,
+                      this->_inverter->getPlantPower(),
+                      this->minPlantPowerSetting);
+        this->_setPinOff();
         return;
     }
     if (this->isPinOn) {
@@ -104,6 +113,11 @@ void SmartRelay::setMinBatteryChargeSetting(uint16_t value) {
     this->_preferences.putUShort(MIN_BATTERY_SETTING, value);
 }
 
+void SmartRelay::setMinPlantPowerSetting(uint32_t value) {
+    this->minPlantPowerSetting = value;
+    this->_preferences.putUInt(MIN_PLANT_POWER_SETTING, value);
+}
+
 void SmartRelay::setMinPowerMeterActivePowerSetting(int32_t value) {
     this->minPowerMeterActivePowerSetting = value;
     this->_preferences.putInt(MIN_ACTIVE_POWER_SETTING, value);
@@ -140,6 +154,7 @@ String SmartRelay::_generateHTML() {
             {"PIN_ENABLE",         this->isPinEnabledSetting ? "checked" : ""},
             {"PIN_ALWAYS_ON",      this->isPinAlwaysOnSetting ? "checked" : ""},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
+            {"MIN_PLANT_POWER",    String(this->minPlantPowerSetting)},
             {"MIN_ACTIVE_POWER",   String(this->minPowerMeterActivePowerSetting)},
             {"MONITORING_WINDOW",  String(this->monitoringWindowMinutesSetting)},
             {"SWITCH_CYCLE",       String(this->switchCycleMinutesSetting)},
@@ -168,6 +183,7 @@ void SmartRelay::_registerHttpRoutes() {
         this->setIsPinEnabledSetting(request->hasArg("pin-enable"));
         this->setIsPinAlwaysOnSetting(request->hasArg("pin-always-on"));
         this->setMinBatteryChargeSetting((u_int16_t) request->arg("pin-battery").toInt());
+        this->setMinPlantPowerSetting((uint32_t) request->arg("pin-plant-power").toInt());
         this->setMinPowerMeterActivePowerSetting((int32_t) request->arg("pin-active-power").toInt());
         this->setMonitoringWindowMinutesSetting((u_int8_t) request->arg("pin-monitor-window").toInt());
         this->setSwitchCycleMinutesSetting((u_int8_t) request->arg("pin-switch-cycle").toInt());

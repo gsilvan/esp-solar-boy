@@ -11,6 +11,7 @@
 #define PIN_ENABLED_SETTING "pinEnabled"
 #define PIN_ALWAYS_ON_SETTING "pinAlwaysOn"
 #define MIN_BATTERY_SETTING "minBattery"
+#define MIN_PLANT_POWER_SETTING "minPlantPower"
 #define MIN_ACTIVE_POWER_SETTING "minPower"
 #define MONITOR_WINDOW_SETTING "monWindow"
 #define SWITCH_CYCLE_SETTING "switchCycle"
@@ -31,6 +32,8 @@ public:
 
     void setMinBatteryChargeSetting(uint16_t value);
 
+    void setMinPlantPowerSetting(uint32_t value);
+
     void setMinPowerMeterActivePowerSetting(int32_t value);
 
     void setMonitoringWindowMinutesSetting(uint8_t value);
@@ -42,6 +45,7 @@ public:
     bool isPinAlwaysOnSetting = false;
     bool isPinEnabledSetting = false;
     uint16_t minBatteryChargeSetting = 95;
+    uint32_t minPlantPowerSetting = 0;
     int32_t minPowerMeterActivePowerSetting = 300;
     uint8_t monitoringWindowMinutesSetting = 1;
     uint8_t switchCycleMinutesSetting = 1;
