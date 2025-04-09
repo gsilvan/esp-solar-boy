@@ -31,8 +31,11 @@ _logger.info(f"Starting Modbus TCP Server on port {PORT}")
 
 battery_charge_power = 20420
 active_power = 500
+plant_power = 1337
 o = 1
 registers = {
+    32064 + o: encode_32bit(plant_power)[0],
+    32065 + o: encode_32bit(plant_power)[1],
     37002 + o: 110,
     37003 + o: 440,
     37004 + o: 220,
