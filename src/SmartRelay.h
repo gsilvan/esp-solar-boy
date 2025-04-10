@@ -15,6 +15,7 @@
 #define MIN_ACTIVE_POWER_SETTING "minPower"
 #define MONITOR_WINDOW_SETTING "monWindow"
 #define SWITCH_CYCLE_SETTING "switchCycle"
+#define NAME_SETTING "name"
 
 class SmartRelay {
 public:
@@ -40,6 +41,8 @@ public:
 
     void setSwitchCycleMinutesSetting(uint8_t value);
 
+    void setName(String value);
+
     const uint64_t UPDATE_INTERVAL = 1000;
     bool isPinOn = false;
     bool isPinAlwaysOnSetting = false;
@@ -49,6 +52,7 @@ public:
     int32_t minPowerMeterActivePowerSetting = 300;
     uint8_t monitoringWindowMinutesSetting = 1;
     uint8_t switchCycleMinutesSetting = 1;
+    String name;
 private:
     uint8_t _pin;
     Inverter *_inverter;
@@ -59,6 +63,7 @@ private:
     String _preferencesNamespace;
     String _settingsRoute;
     String _indicatorRoute;
+    String _labelRoute;
 
     uint64_t _switchCycleMillis() const;
 
@@ -69,6 +74,8 @@ private:
     String _generateSettingsRoute();
 
     String _generateIndicatorRoute();
+
+    String _generateLabelRoute();
 
     String _generateHTML();
 

@@ -33,6 +33,10 @@
             <input class="input" type="checkbox" id="pin-always-on" name="pin-always-on" {{PIN_ALWAYS_ON}}>
         </div>
         <div class="field">
+            <label for="pin-name">Name:</label>
+            <input class="input" type="text" id="pin-name" name="pin-name" value="{{PIN_NAME}}">
+        </div>
+        <div class="field">
             <label for="pin-battery">Minimum Battery charge (%):</label>
             <input class="input" type="number" min="0" max="100" step="1" id="pin-battery" name="pin-battery"
                    value="{{MIN_BATTERY_CHARGE}}">

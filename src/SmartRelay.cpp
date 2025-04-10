@@ -9,6 +9,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_preferencesNamespace = String("smart-relay") + String(this->_pin);
     this->_settingsRoute = this->_generateSettingsRoute();
     this->_indicatorRoute = this->_generateIndicatorRoute();
+    this->_labelRoute = this->_generateLabelRoute();
 
     this->_preferences.begin(_preferencesNamespace.c_str(), false);
     this->isPinEnabledSetting = _preferences.getBool(PIN_ENABLED_SETTING, false);
@@ -18,6 +19,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->minPowerMeterActivePowerSetting = _preferences.getInt(MIN_ACTIVE_POWER_SETTING, 300);
     this->monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
     this->switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
+    this->name = _preferences.getString(NAME_SETTING, String(this->_pin));
 }
 
 void SmartRelay::setup(Inverter *inverter, AsyncWebServer *httpServer) {
@@ -133,12 +135,21 @@ void SmartRelay::setSwitchCycleMinutesSetting(uint8_t value) {
     this->_preferences.putUChar(SWITCH_CYCLE_SETTING, value);
 }
 
+void SmartRelay::setName(String value) {
+    this->name = value;
+    this->_preferences.putString(NAME_SETTING, value);
+}
+
 String SmartRelay::_generateSettingsRoute() {
     return String("/pin/" + String(this->_pin));
 }
 
 String SmartRelay::_generateIndicatorRoute() {
     return String(this->_settingsRoute + "/indicator");
+}
+
+String SmartRelay::_generateLabelRoute() {
+    return String(this->_settingsRoute + "/label");
 }
 
 String SmartRelay::_generateHTML() {
@@ -153,6 +164,7 @@ String SmartRelay::_generateHTML() {
             {"ROUTE",              this->_settingsRoute},
             {"PIN_ENABLE",         this->isPinEnabledSetting ? "checked" : ""},
             {"PIN_ALWAYS_ON",      this->isPinAlwaysOnSetting ? "checked" : ""},
+            {"PIN_NAME",           this->name},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
             {"MIN_PLANT_POWER",    String(this->minPlantPowerSetting)},
             {"MIN_ACTIVE_POWER",   String(this->minPowerMeterActivePowerSetting)},
@@ -176,12 +188,16 @@ void SmartRelay::_registerHttpRoutes() {
     this->_httpServer->on(this->_indicatorRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(200, "text/html", this->_generateIndicatorHTML());
     });
+    this->_httpServer->on(this->_labelRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
+        request->send(200, "text/plain", this->name);
+    });
     this->_httpServer->on(this->_settingsRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(200, "text/html", this->_generateHTML());
     });
     this->_httpServer->on(this->_settingsRoute.c_str(), HTTP_POST, [this](AsyncWebServerRequest *request) {
         this->setIsPinEnabledSetting(request->hasArg("pin-enable"));
         this->setIsPinAlwaysOnSetting(request->hasArg("pin-always-on"));
+        this->setName(request->arg("pin-name"));
         this->setMinBatteryChargeSetting((u_int16_t) request->arg("pin-battery").toInt());
         this->setMinPlantPowerSetting((uint32_t) request->arg("pin-plant-power").toInt());
         this->setMinPowerMeterActivePowerSetting((int32_t) request->arg("pin-active-power").toInt());
