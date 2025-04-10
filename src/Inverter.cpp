@@ -3,7 +3,8 @@
 
 Inverter::Inverter() :
         _powerMeterActivePowerHistory(DEQUE_SIZE, 0),
-        _batteryStateOfChargeHistory(DEQUE_SIZE, 0) {
+        _batteryStateOfChargeHistory(DEQUE_SIZE, 0),
+        _plantPowerHistory(DEQUE_SIZE, 0) {
     this->_preferences.begin("inverter", false);
     this->setIpAddress(this->_preferences.getString("ip", ""));
     this->setPort(this->_preferences.getUShort("port", 502));
@@ -94,6 +95,7 @@ void Inverter::_updateHistory() {
     if (millis() - this->_lastHistoryUpdate >= this->HISTORY_UPDATE_INTERVAL) {
         this->_addToDeque(this->getPowerMeterActivePower(), &this->_powerMeterActivePowerHistory);
         this->_addToDeque(this->getBatteryStateOfCharge(), &this->_batteryStateOfChargeHistory);
+        this->_addToDeque(this->getPlantPower(), &this->_plantPowerHistory);
         this->_lastHistoryUpdate = millis();
     }
 }
@@ -117,6 +119,16 @@ int Inverter::meanPowerMeterActivePower(int lastNMinutes) {
     int indexOffset = this->_minutesToN(lastNMinutes);
     double input_sum = std::accumulate(this->_powerMeterActivePowerHistory.end() - indexOffset,
                                        this->_powerMeterActivePowerHistory.end(), 0);
+    return (int) (input_sum / indexOffset);
+}
+
+int Inverter::meanPlantPower(int lastNMinutes) {
+    if (this->_plantPowerHistory.empty()) {
+        return 0;
+    }
+    int indexOffset = this->_minutesToN(lastNMinutes);
+    double input_sum = std::accumulate(this->_plantPowerHistory.end() - indexOffset,
+                                       this->_plantPowerHistory.end(), 0);
     return (int) (input_sum / indexOffset);
 }
 

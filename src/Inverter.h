@@ -29,6 +29,8 @@ public:
 
     int meanPowerMeterActivePower(int lastNMinutes);
 
+    int meanPlantPower(int lastNMinutes);
+
     void setIpAddress(const IPAddress &ip);
 
     void setIpAddress(const String &ip);
@@ -59,6 +61,7 @@ private:
     uint64_t _lastHistoryUpdate = 0;
     std::deque<int> _powerMeterActivePowerHistory;
     std::deque<int> _batteryStateOfChargeHistory;
+    std::deque<int> _plantPowerHistory;
 
     void _addToDeque(int value, std::deque<int> *dq) const;
 
