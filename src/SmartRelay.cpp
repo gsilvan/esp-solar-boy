@@ -53,11 +53,11 @@ void SmartRelay::update() {
         this->_lastUpdateTime = millis();
         return;
     }
-    if (this->_inverter->meanPlantPower(this->monitoringWindowMinutesSetting) < this->minPlantPowerSetting) {
-        Serial.printf("[%d] OFF (Plant power smaller than threshold %d < %u)\n",
+    if (this->_inverter->meanPlantPower(this->monitoringWindowMinutesSetting) < (int) this->minPlantPowerSetting) {
+        Serial.printf("[%d] OFF (Plant power smaller than threshold %d < %d)\n",
                       this->_pin,
                       this->_inverter->meanPlantPower(this->monitoringWindowMinutesSetting),
-                      this->minPlantPowerSetting);
+                      (int) this->minPlantPowerSetting);
         this->_setPinOff();
         return;
     }
