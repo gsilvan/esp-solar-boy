@@ -1,12 +1,12 @@
 #include <ESP8266WiFi.h>
-#include <ESPAsync_WiFiManager.h>
-#include <ESPAsyncDNSServer.h>
 #include <ESPAsyncWebServer.h>
 #include <ESP8266mDNS.h>
 #include <ESPAsyncHTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <LittleFS.h>
+#define WIFI_MANAGER_USE_ASYNC_WEB_SERVER
+#include <WiFiManager.h>
 
 #include "Inverter.h"
 #include "version.h"
@@ -16,8 +16,6 @@
 const char *dns_name = "solarboy";
 
 AsyncWebServer httpServer(80);
-AsyncDNSServer dnsServer;
-ESPAsync_WiFiManager wifiManager(&httpServer, &dnsServer);
 ESPAsyncHTTPUpdateServer updateServer;
 
 Inverter inverter;
@@ -35,6 +33,11 @@ void setup() {
     Serial.begin(115200);
     Serial.print("Firmware v");
     Serial.println(FIRMWARE_VERSION);
+    if (!LittleFS.begin()) {
+        Serial.println("LittleFS Mount Failed");
+        return;
+    }
+    WiFiManager wifiManager;
     wifiManager.autoConnect("esp-solar-boy");
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -51,11 +54,6 @@ void setup() {
     }
 
     dc.setup(&inverter, "dev-device");
-
-    if (!LittleFS.begin()) {
-        Serial.println("LittleFS Mount Failed");
-        return;
-    }
 
     httpServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html", "text/html");
