@@ -17,6 +17,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);
     this->minPlantPowerSetting = _preferences.getUInt(MIN_PLANT_POWER_SETTING, 0);
     this->turnOnPowerMeterActivePowerSetting = _preferences.getInt(TURN_ON_ACTIVE_POWER_SETTING, 300);
+    this->turnOffPowerMeterActivePowerSetting = _preferences.getInt(TURN_OFF_ACTIVE_POWER_SETTING, 100);
     this->monitoringWindowMinutesSetting = _preferences.getUChar(MONITOR_WINDOW_SETTING, 1);
     this->switchCycleMinutesSetting = _preferences.getUChar(SWITCH_CYCLE_SETTING, 1);
     this->name = _preferences.getString(NAME_SETTING, String(this->_pin));
