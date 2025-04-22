@@ -64,8 +64,8 @@ void SmartRelay::update() {
     }
     if (this->isPinOn) {
         if ((this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting) >= (int) this->minBatteryChargeSetting) &&
-            (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= 100)) {
-            Serial.printf("[%d] ON (Pin was on, active power still > 100 Watts)\n", this->_pin);
+            (this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting) >= this->turnOffPowerMeterActivePowerSetting)) {
+            Serial.printf("[%d] ON (Pin was on, active power still > %d Watts)\n", this->_pin, this->turnOffPowerMeterActivePowerSetting);
             this->_setPinOn();
             return;
         }
@@ -126,6 +126,11 @@ void SmartRelay::setTurnOnPowerMeterActivePowerSetting(int32_t value) {
     this->_preferences.putInt(TURN_ON_ACTIVE_POWER_SETTING, value);
 }
 
+void SmartRelay::setTurnOffPowerMeterActivePowerSetting(int32_t value) {
+    this->turnOffPowerMeterActivePowerSetting = value;
+    this->_preferences.putInt(TURN_OFF_ACTIVE_POWER_SETTING, value);
+}
+
 void SmartRelay::setMonitoringWindowMinutesSetting(uint8_t value) {
     this->monitoringWindowMinutesSetting = value;
     this->_preferences.putUChar(MONITOR_WINDOW_SETTING, value);
@@ -169,6 +174,7 @@ String SmartRelay::_generateHTML() {
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
             {"MIN_PLANT_POWER",    String(this->minPlantPowerSetting)},
             {"TURN_ON_ACTIVE_POWER",   String(this->turnOnPowerMeterActivePowerSetting)},
+            {"TURN_OFF_ACTIVE_POWER",  String(this->turnOffPowerMeterActivePowerSetting)},
             {"MONITORING_WINDOW",  String(this->monitoringWindowMinutesSetting)},
             {"SWITCH_CYCLE",       String(this->switchCycleMinutesSetting)},
     };
@@ -202,6 +208,7 @@ void SmartRelay::_registerHttpRoutes() {
         this->setMinBatteryChargeSetting((u_int16_t) request->arg("pin-battery").toInt());
         this->setMinPlantPowerSetting((uint32_t) request->arg("pin-plant-power").toInt());
         this->setTurnOnPowerMeterActivePowerSetting((int32_t) request->arg("pin-on-active-power").toInt());
+        this->setTurnOffPowerMeterActivePowerSetting((int32_t) request->arg("pin-off-active-power").toInt());
         this->setMonitoringWindowMinutesSetting((u_int8_t) request->arg("pin-monitor-window").toInt());
         this->setSwitchCycleMinutesSetting((u_int8_t) request->arg("pin-switch-cycle").toInt());
         request->send(200, "text/plain", "Saved 👍");
