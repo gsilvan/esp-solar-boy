@@ -12,7 +12,7 @@
 #define PIN_ALWAYS_ON_SETTING "pinAlwaysOn"
 #define MIN_BATTERY_SETTING "minBattery"
 #define MIN_PLANT_POWER_SETTING "minPlantPower"
-#define MIN_ACTIVE_POWER_SETTING "minPower"
+#define TURN_ON_ACTIVE_POWER_SETTING "onActivePower"
 #define MONITOR_WINDOW_SETTING "monWindow"
 #define SWITCH_CYCLE_SETTING "switchCycle"
 #define NAME_SETTING "name"
@@ -35,7 +35,7 @@ public:
 
     void setMinPlantPowerSetting(uint32_t value);
 
-    void setMinPowerMeterActivePowerSetting(int32_t value);
+    void setTurnOnPowerMeterActivePowerSetting(int32_t value);
 
     void setMonitoringWindowMinutesSetting(uint8_t value);
 
@@ -49,7 +49,7 @@ public:
     bool isPinEnabledSetting = false;
     uint16_t minBatteryChargeSetting = 95;
     uint32_t minPlantPowerSetting = 0;
-    int32_t minPowerMeterActivePowerSetting = 300;
+    int32_t turnOnPowerMeterActivePowerSetting = 300;
     uint8_t monitoringWindowMinutesSetting = 1;
     uint8_t switchCycleMinutesSetting = 1;
     String name;
