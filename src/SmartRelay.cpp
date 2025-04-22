@@ -47,6 +47,7 @@ void SmartRelay::update() {
     }
     Serial.printf("minBattery: %d\n", this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting));
     Serial.printf("meanActPwr: %d\n", this->_inverter->meanPowerMeterActivePower(this->monitoringWindowMinutesSetting));
+    Serial.printf("meanPltPwr: %d\n", this->_inverter->meanPlantPower(this->monitoringWindowMinutesSetting));
     if (this->isPinOn && (millis() - this->_lastEnableTime < this->_switchCycleMillis())) {
         // If relay is on and our switch cycle is running we do nothing in this update loop
         Serial.printf("[%d] ON (Holding switch cycle)\n", this->_pin);
