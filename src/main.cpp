@@ -12,6 +12,7 @@
 #include "version.h"
 #include "DataCollector.h"
 #include "SmartRelay.h"
+#include "LongPressButton.h"
 
 const char *dns_name = "solarboy";
 
@@ -28,6 +29,16 @@ DataCollector dc;
 SmartRelay sm0(D0);
 SmartRelay sm1(D1);
 SmartRelay sm2(D2);
+LongPressButton resetButton(D5);
+
+static void resetWifi() {
+    Serial.println("RESET WIFI");
+    WiFi.disconnect(true);
+    Serial.println("ERASE CONFIG");
+    ESP.eraseConfig();
+    Serial.println("RESTART");
+    ESP.restart();
+}
 
 void setup() {
     Serial.begin(115200);
@@ -146,6 +157,8 @@ void setup() {
     updateServer.setup(&httpServer);
     httpServer.begin();
     Serial.println("HTTP server started");
+    resetButton.onLongPress(resetWifi);
+    resetButton.begin();
 }
 
 void loop() {
@@ -161,4 +174,5 @@ void loop() {
     sm2.update();
 
     dc.update();
+    resetButton.update();
 }
