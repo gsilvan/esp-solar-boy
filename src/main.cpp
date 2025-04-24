@@ -13,6 +13,7 @@
 #include "DataCollector.h"
 #include "SmartRelay.h"
 #include "LongPressButton.h"
+#include "StatusLed.h"
 
 const char *dns_name = "solarboy";
 
@@ -30,6 +31,7 @@ SmartRelay sm0(D0);
 SmartRelay sm1(D1);
 SmartRelay sm2(D2);
 LongPressButton resetButton(D5);
+StatusLed statusLed(D6);
 
 static void resetWifi() {
     Serial.println("RESET WIFI");
@@ -64,6 +66,7 @@ void setup() {
         Serial.println("http://" + String(dns_name) + ".local/");
     }
 
+    statusLed.attachInverter(&inverter);
     dc.setup(&inverter, "dev-device");
 
     httpServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -162,6 +165,7 @@ void setup() {
 }
 
 void loop() {
+    statusLed.update();
     timeClient.update();
     MDNS.update();
 
