@@ -70,7 +70,7 @@ void Inverter::printy() {
 }
 
 int32_t Inverter::getPowerMeterActivePower() const {
-    return (int32_t) (this->_powerMeterActivePowerRaw[0] << 16 | this->_powerMeterActivePowerRaw[1]);
+    return ((int32_t) (this->_powerMeterActivePowerRaw[0] << 16 | this->_powerMeterActivePowerRaw[1])) * -1;
 }
 
 void Inverter::_addToDeque(int value, std::deque<int> *dq) const {
