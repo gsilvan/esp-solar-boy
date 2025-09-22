@@ -53,7 +53,7 @@ uint16_t Inverter::getBatteryStateOfCharge() const {
 }
 
 int32_t Inverter::getBatteryChargePower() const {
-    return ((int32_t) (_batteryChargePowerRaw[0] << 16 | _batteryChargePowerRaw[1])) * -1;
+    return (int32_t) (_batteryChargePowerRaw[0] << 16 | _batteryChargePowerRaw[1]);
 }
 
 int32_t Inverter::getPlantPower() const {
