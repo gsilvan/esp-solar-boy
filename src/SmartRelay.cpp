@@ -11,7 +11,7 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_indicatorRoute = this->_generateIndicatorRoute();
     this->_labelRoute = this->_generateLabelRoute();
 
-    this->_preferences.begin(_preferencesNamespace.c_str(), false);
+    this->_preferences.begin(_preferencesNamespace.c_str(), false, "nvs");
     this->isPinEnabledSetting = _preferences.getBool(PIN_ENABLED_SETTING, false);
     this->isPinAlwaysOnSetting = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);

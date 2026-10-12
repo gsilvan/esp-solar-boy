@@ -5,7 +5,7 @@ Inverter::Inverter() :
         _powerMeterActivePowerHistory(DEQUE_SIZE, 0),
         _batteryStateOfChargeHistory(DEQUE_SIZE, 0),
         _plantPowerHistory(DEQUE_SIZE, 0) {
-    this->_preferences.begin("inverter", false);
+    this->_preferences.begin("inverter", false, "nvs");
     this->setIpAddress(this->_preferences.getString("ip", ""));
     this->setPort(this->_preferences.getUShort("port", 502));
     this->setModbusUnit(this->_preferences.getUChar("unit", 1));

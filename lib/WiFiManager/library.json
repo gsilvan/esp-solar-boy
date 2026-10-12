@@ -1,0 +1,6 @@
+{
+  "name": "SolarBoyLegacyWiFiManager",
+  "version": "0.0.0",
+  "frameworks": "arduino",
+  "platforms": "espressif8266"
+}

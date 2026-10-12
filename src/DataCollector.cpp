@@ -41,11 +41,10 @@ JsonDocument DataCollector::generateJson() {
 }
 
 DataCollector::DataCollector() {
-    this->_preferences.begin("telemetry", false);
+    this->_preferences.begin("telemetry", false, "nvs");
     this->isEnabled = this->_preferences.getBool("isEnabled", false);
     this->url = this->_preferences.getString("url", "");
     this->wifiClient = WiFiClient();
-    this->httpClient = HTTPClient();
 }
 
 void DataCollector::setIsEnabled(bool value) {

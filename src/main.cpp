@@ -1,12 +1,11 @@
-#include <ESP8266WiFi.h>
+#include <WiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <ESP8266mDNS.h>
+#include <ESPmDNS.h>
 #include <ESPAsyncHTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <LittleFS.h>
-#define WIFI_MANAGER_USE_ASYNC_WEB_SERVER
-#include <WiFiManager.h>
+#include "WiFiPortal.h"
 
 #include "Inverter.h"
 #include "version.h"
@@ -27,17 +26,15 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
-SmartRelay sm0(D0);
-SmartRelay sm1(D1);
-SmartRelay sm2(D2);
-LongPressButton resetButton(D5);
-StatusLed statusLed(D6);
+SmartRelay sm0(16);
+SmartRelay sm1(17);
+SmartRelay sm2(18);
+LongPressButton resetButton(25);
+StatusLed statusLed(26);
 
 static void resetWifi() {
     Serial.println("RESET WIFI");
-    WiFi.disconnect(true);
-    Serial.println("ERASE CONFIG");
-    ESP.eraseConfig();
+    WiFi.disconnect(true, true);
     Serial.println("RESTART");
     ESP.restart();
 }
@@ -50,8 +47,7 @@ void setup() {
         Serial.println("LittleFS Mount Failed");
         return;
     }
-    WiFiManager wifiManager;
-    wifiManager.autoConnect("esp-solar-boy");
+    provision();
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
         Serial.print(".");
@@ -167,7 +163,6 @@ void setup() {
 void loop() {
     statusLed.update();
     timeClient.update();
-    MDNS.update();
 
     if (inverter.update()) {
         lastInverterDataTimestamp = timeClient.getEpochTime();
