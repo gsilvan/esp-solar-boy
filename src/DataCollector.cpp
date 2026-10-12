@@ -41,11 +41,14 @@ JsonDocument DataCollector::generateJson() {
 }
 
 DataCollector::DataCollector() {
+#ifdef ESP32
+    this->_preferences.begin("telemetry", false, "nvs");
+#else
     this->_preferences.begin("telemetry", false);
+#endif
     this->isEnabled = this->_preferences.getBool("isEnabled", false);
     this->url = this->_preferences.getString("url", "");
     this->wifiClient = WiFiClient();
-    this->httpClient = HTTPClient();
 }
 
 void DataCollector::setIsEnabled(bool value) {
