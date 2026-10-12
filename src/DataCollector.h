@@ -3,8 +3,13 @@
 
 #include "Inverter.h"
 #include "Arduino.h"
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#else
 #include <WiFi.h>
 #include <HTTPClient.h>
+#endif
 #include <WiFiClientSecure.h>
 #include <ArduinoJson.h>
 #include <Preferences.h>

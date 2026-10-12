@@ -2,7 +2,11 @@
 #define ESP_SOLAR_BOY_SMARTRELAY_H
 #include <Arduino.h>
 #include <Preferences.h>
+#ifdef ESP8266
+#include <ESPAsyncTCP.h>
+#else
 #include <AsyncTCP.h>
+#endif
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include "Inverter.h"

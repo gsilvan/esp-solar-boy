@@ -11,7 +11,11 @@ SmartRelay::SmartRelay(uint8_t pin) {
     this->_indicatorRoute = this->_generateIndicatorRoute();
     this->_labelRoute = this->_generateLabelRoute();
 
+#ifdef ESP32
     this->_preferences.begin(_preferencesNamespace.c_str(), false, "nvs");
+#else
+    this->_preferences.begin(_preferencesNamespace.c_str(), false);
+#endif
     this->isPinEnabledSetting = _preferences.getBool(PIN_ENABLED_SETTING, false);
     this->isPinAlwaysOnSetting = _preferences.getBool(PIN_ALWAYS_ON_SETTING, false);
     this->minBatteryChargeSetting = _preferences.getUShort(MIN_BATTERY_SETTING, 90);

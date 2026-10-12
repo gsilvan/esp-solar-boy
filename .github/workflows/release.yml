@@ -42,7 +42,11 @@ jobs:
       - name: Prepare binaries
         run: |
           mkdir -p binaries
-          cp .pio/build/*/*.bin binaries/ || true
+          for target in esp32 esp8266; do
+            for binary in .pio/build/"$target"/*.bin; do
+              cp "$binary" "binaries/${target}-$(basename "$binary")"
+            done
+          done
 
       - name: Sign firmware with ECDSA
         run: |

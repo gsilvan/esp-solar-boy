@@ -1,6 +1,11 @@
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#include <ESP8266mDNS.h>
+#else
 #include <WiFi.h>
-#include <ESPAsyncWebServer.h>
 #include <ESPmDNS.h>
+#endif
+#include <ESPAsyncWebServer.h>
 #include <ESPAsyncHTTPUpdateServer.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
@@ -26,15 +31,34 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
 DataCollector dc;
-SmartRelay sm0(16);
-SmartRelay sm1(17);
-SmartRelay sm2(18);
-LongPressButton resetButton(25);
-StatusLed statusLed(26);
+#ifdef ESP8266
+const uint8_t relay0 = D0;
+const uint8_t relay1 = D1;
+const uint8_t relay2 = D2;
+const uint8_t resetPin = D5;
+const uint8_t ledPin = D6;
+#else
+const uint8_t relay0 = 16;
+const uint8_t relay1 = 17;
+const uint8_t relay2 = 18;
+const uint8_t resetPin = 25;
+const uint8_t ledPin = 26;
+#endif
+SmartRelay sm0(relay0);
+SmartRelay sm1(relay1);
+SmartRelay sm2(relay2);
+LongPressButton resetButton(resetPin);
+StatusLed statusLed(ledPin);
 
 static void resetWifi() {
     Serial.println("RESET WIFI");
+#ifdef ESP8266
+    WiFi.disconnect(true);
+    Serial.println("ERASE CONFIG");
+    ESP.eraseConfig();
+#else
     WiFi.disconnect(true, true);
+#endif
     Serial.println("RESTART");
     ESP.restart();
 }
@@ -66,7 +90,13 @@ void setup() {
     dc.setup(&inverter, "dev-device");
 
     httpServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html", "text/html");
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html", "text/html", false,
+            [](const String &key) -> String {
+                if (key == "RELAY0") return String(relay0);
+                if (key == "RELAY1") return String(relay1);
+                if (key == "RELAY2") return String(relay2);
+                return String();
+            });
         request->send(response);
     });
     httpServer.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -163,6 +193,9 @@ void setup() {
 void loop() {
     statusLed.update();
     timeClient.update();
+#ifdef ESP8266
+    MDNS.update();
+#endif
 
     if (inverter.update()) {
         lastInverterDataTimestamp = timeClient.getEpochTime();
