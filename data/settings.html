@@ -58,29 +58,6 @@
                    hx-trigger="load"
                    hx-on::after:request="this.value = event.detail.ctx.text">
         </div>
-        <h3>Telemetry</h3>
-        <div class="field">
-            <label for="enable-data-collection">On:</label>
-            <input class="input"
-                   type="checkbox"
-                   id="enable-data-collection"
-                   name="enable-data-collection"
-                   hx-get="/getTelemetryCheckbox"
-                   hx-trigger="load"
-                   hx-target="#enable-data-collection"
-                   hx-swap="outerHTML">
-        </div>
-        <div class="field">
-            <label for="data-collection-url">URL:</label>
-            <input class="input"
-                   type="text"
-                   id="data-collection-url"
-                   name="data-collection-url"
-                   value=""
-                   hx-get="/getTelemetryUrl"
-                   hx-trigger="load"
-                   hx-on::after:request="this.value = event.detail.ctx.text">
-        </div>
         <button>Save</button>
     </form>
 </main>

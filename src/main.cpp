@@ -14,7 +14,6 @@
 
 #include "Inverter.h"
 #include "version.h"
-#include "DataCollector.h"
 #include "SmartRelay.h"
 #include "LongPressButton.h"
 #include "StatusLed.h"
@@ -30,7 +29,6 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org");
 u_int64_t lastInverterDataTimestamp = 0;
 
-DataCollector dc;
 #ifdef ESP8266
 const uint8_t relay0 = D0;
 const uint8_t relay1 = D1;
@@ -87,7 +85,6 @@ void setup() {
     }
 
     statusLed.attachInverter(&inverter);
-    dc.setup(&inverter, "dev-device");
 
     httpServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/index.html", "text/html", false,
@@ -150,14 +147,6 @@ void setup() {
     httpServer.on("/getInverterModbusUnit", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(inverter.modbusUnit));
     });
-    httpServer.on("/getTelemetryCheckbox", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/html", dc.isEnabled
-                                         ? R"(<input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection" checked>)"
-                                         : R"(<input class="input" type="checkbox" id="enable-data-collection" name="enable-data-collection">)");
-    });
-    httpServer.on("/getTelemetryUrl", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", dc.url);
-    });
     httpServer.on("/getConnectionStatus", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", inverter.isConnected
                                          ? R"(<div class="connection-indicator connected"></div><div class="connection-text connected-text">Sun2000 connected</div>)"
@@ -172,8 +161,6 @@ void setup() {
             request->send(400, "application/html", "<h1>Bad request</h1>");
             return;
         }
-        dc.setIsEnabled(request->hasArg("enable-data-collection"));
-        dc.setUrl(request->arg("data-collection-url"));
         inverter.setIpAddress(request->arg("settings-inverter-ip"));
         inverter.setPort(request->arg("settings-inverter-port"));
         inverter.setModbusUnit(request->arg("settings-inverter-modbus-unit"));
@@ -205,6 +192,5 @@ void loop() {
     sm1.update();
     sm2.update();
 
-    dc.update();
     resetButton.update();
 }
