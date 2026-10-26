@@ -175,7 +175,7 @@ String SmartRelay::_generateHTML() {
             {"ROUTE",              this->_settingsRoute},
             {"PIN_ENABLE",         this->isPinEnabledSetting ? "checked" : ""},
             {"PIN_ALWAYS_ON",      this->isPinAlwaysOnSetting ? "checked" : ""},
-            {"PIN_NAME",           this->name},
+            {"PIN_NAME",           escapeHtml(this->name)},
             {"MIN_BATTERY_CHARGE", String(this->minBatteryChargeSetting)},
             {"MIN_PLANT_POWER",    String(this->minPlantPowerSetting)},
             {"TURN_ON_ACTIVE_POWER",   String(this->turnOnPowerMeterActivePowerSetting)},
@@ -201,7 +201,7 @@ void SmartRelay::_registerHttpRoutes() {
         request->send(200, "text/html", this->_generateIndicatorHTML());
     });
     this->_httpServer->on(this->_labelRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", this->name);
+        request->send(200, "text/html; charset=utf-8", escapeHtml(this->name));
     });
     this->_httpServer->on(this->_settingsRoute.c_str(), HTTP_GET, [this](AsyncWebServerRequest *request) {
         request->send(200, "text/html", this->_generateHTML());
