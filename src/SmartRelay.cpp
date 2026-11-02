@@ -34,6 +34,11 @@ void SmartRelay::setup(Inverter *inverter, AsyncWebServer *httpServer) {
 }
 
 void SmartRelay::update() {
+    // Invalid telemetry must also interrupt a running switch cycle immediately.
+    if (!this->_inverter || (!this->isPinAlwaysOnSetting && !this->_inverter->hasValidReadings())) {
+        if (this->isPinOn) this->_setPinOff();
+        return;
+    }
     if (millis() - this->_lastUpdateTime < this->UPDATE_INTERVAL) {
         return;
     }
@@ -43,11 +48,6 @@ void SmartRelay::update() {
     }
     if (this->isPinAlwaysOnSetting) {
         this->_setPinOn();
-        return;
-    }
-    if (!this->_inverter->isConnected) {
-        Serial.printf("[%d] OFF (Inverter not connected)\n", this->_pin);
-        this->_setPinOff();
         return;
     }
     Serial.printf("minBattery: %d\n", this->_inverter->minBatteryStateOfCharge(this->monitoringWindowMinutesSetting));
@@ -219,4 +219,3 @@ void SmartRelay::_registerHttpRoutes() {
         request->send(200, "text/plain", "Saved 👍");
     });
 }
-

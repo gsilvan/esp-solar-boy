@@ -6,11 +6,17 @@ Usage:
 """
 
 import asyncio
+import argparse
 import logging
+import struct
+import tomllib
+from pathlib import Path
 from pymodbus import FramerType
 from pymodbus.server import ModbusTcpServer
 from pymodbus.server.requesthandler import ServerRequestHandler
 from pymodbus.simulator import DataType, SimData, SimDevice
+from pymodbus.simulator.simcore import SimCore
+from pymodbus.exceptions import NoSuchIdException
 
 PORT = 5020
 
@@ -49,7 +55,25 @@ class PipelinedRequestHandler(ServerRequestHandler):
                 self.datagram_received(b"", self.last_addr)
 
 
+class StrictSimCore(SimCore):
+    """Do not let the simulator's unit-0 fallback mask an incorrect unit."""
+
+    async def async_getValues(self, device_id, func_code, address, count=1):
+        if device_id not in self.devices:
+            raise NoSuchIdException(f"Unknown unit {device_id}")
+        return await super().async_getValues(device_id, func_code, address, count)
+
+    async def async_setValues(self, device_id, func_code, address, values):
+        if device_id not in self.devices:
+            raise NoSuchIdException(f"Unknown unit {device_id}")
+        return await super().async_setValues(device_id, func_code, address, values)
+
+
 class PipelinedModbusTcpServer(ModbusTcpServer):
+    def __init__(self, context, **kwargs):
+        super().__init__(context=context, **kwargs)
+        self.context = StrictSimCore(context)
+
     def callback_new_connection(self):
         return PipelinedRequestHandler(
             self, self.trace_packet, self.trace_pdu, self.trace_connect
@@ -66,42 +90,73 @@ def encode_32bit(value):
 _logger = logging.getLogger(__name__)
 
 
-battery_charge_power = 20420
-active_power = 500
-plant_power = 1337
-# SimData uses wire addresses directly.
-registers = {
-    32064: encode_32bit(plant_power)[0],
-    32065: encode_32bit(plant_power)[1],
-    37003: 440,
-    37004: 220,
-    37001: encode_32bit(battery_charge_power)[0],
-    37002: encode_32bit(battery_charge_power)[1],
-    37113: encode_32bit(active_power)[0],
-    37114: encode_32bit(active_power)[1],
-}
+def make_device(unit, registers):
+    # SimData uses wire addresses directly.
+    holding_registers = [
+        SimData(address, values=value, datatype=DataType.REGISTERS)
+        for address, value in sorted(registers.items())
+    ]
+    return SimDevice(
+        id=unit,
+        simdata=(
+            [SimData(1, values=False, datatype=DataType.BITS)],
+            [SimData(1, values=False, datatype=DataType.BITS)],
+            holding_registers or [SimData(1, values=0, datatype=DataType.REGISTERS)],
+            [SimData(1, values=0, datatype=DataType.REGISTERS)],
+        ),
+    )
 
-holding_registers = [
-    SimData(address, values=value, datatype=DataType.REGISTERS)
-    for address, value in sorted(registers.items())
-]
-# Device ID 0 handles all IDs, matching the previous single-device context.
-context = SimDevice(
-    id=0,
-    simdata=(
-        [SimData(1, values=False, datatype=DataType.BITS)],  # Coils
-        [SimData(1, values=False, datatype=DataType.BITS)],  # Discrete inputs
-        holding_registers,
-        [SimData(1, values=0, datatype=DataType.REGISTERS)],  # Input registers
-    ),
-)
+
+def load_presets():
+    presets = {}
+    for path in sorted((Path(__file__).resolve().parents[1] / "data" / "presets").glob("*.toml")):
+        with path.open("rb") as source:
+            config = tomllib.load(source)
+        if config["id"] in presets:
+            raise ValueError(f"Duplicate preset id: {config['id']}")
+        presets[config["id"]] = config
+    return presets
+
+
+def create_context(preset="sun2000", grid_power=500, inverter_unit=None):
+    definition = load_presets()[preset]
+    if inverter_unit is None:
+        inverter_unit = definition["default_unit"]
+    values = {"soc": 22, "battery": 20420, "plant": 1337, "grid": grid_power}
+    devices = {}
+    formats = {"u16": "H", "i16": "h", "u32": "I", "i32": "i", "float32": "f"}
+    for key, sample in values.items():
+        mapping = definition[key]
+        unit = inverter_unit if mapping["unit_mode"] == "inverter" else mapping["unit"]
+        registers = devices.setdefault(unit, {})
+        raw = 0 if definition["requires_overrides"] else sample / mapping["scale"]
+        if mapping["invert"]:
+            raw = -raw
+        if mapping["type"] != "float32":
+            raw = round(raw)
+        packed = struct.pack(">" + formats[mapping["type"]], raw)
+        words = list(struct.unpack(">" + "H" * (len(packed) // 2), packed))
+        if mapping["word_order"] == "low":
+            words.reverse()
+        for offset, word in enumerate(words):
+            address = mapping["register"] + offset
+            if address in registers and registers[address] != word:
+                raise ValueError(f"Conflicting sample registers for unit {unit} at {address}")
+            registers[address] = word
+    return [make_device(unit, data) for unit, data in devices.items()]
 
 
 async def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--preset", choices=sorted(load_presets()), default="sun2000")
+    parser.add_argument("--grid-power", type=int, default=500, help="Watts: positive export, negative import")
+    parser.add_argument("--inverter-unit", type=int, choices=range(1, 248))
+    args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     _logger.info(f"Starting Modbus TCP Server on port {PORT}")
     server = PipelinedModbusTcpServer(
-        context=context, address=("0.0.0.0", PORT), framer=FramerType.SOCKET
+        context=create_context(args.preset, args.grid_power, args.inverter_unit),
+        address=("0.0.0.0", PORT), framer=FramerType.SOCKET
     )
     try:
         await server.serve_forever()

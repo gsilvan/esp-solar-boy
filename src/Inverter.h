@@ -6,12 +6,15 @@
 #include <IPAddress.h>
 #include <ModbusIP_ESP8266.h>
 #include <Preferences.h>
+#include "InverterConfig.h"
 
 class Inverter {
 public:
     Inverter();
 
     ~Inverter();
+
+    void begin();
 
     bool update();
 
@@ -31,21 +34,16 @@ public:
 
     int meanPlantPower(int lastNMinutes);
 
-    void setIpAddress(const IPAddress &ip);
+    enum class SaveResult { Saved, Busy, StorageError };
 
-    void setIpAddress(const String &ip);
+    InverterConfig getConfig() const;
 
-    void setPort(in_port_t _port);
+    SaveResult saveConfig(const InverterConfig &config);
 
-    void setPort(const String &_port);
-
-    void setModbusUnit(uint8_t _unit);
-
-    void setModbusUnit(const String &_unit);
+    bool hasValidReadings() const;
 
     IPAddress ipAddress;
     in_port_t port = 502;
-    uint8_t modbusUnit = 1;
     bool isConnected = false;
     const uint16_t DEQUE_SIZE = 360;
     const uint64_t INVERTER_UPDATE_INTERVAL = 10000;
@@ -53,11 +51,25 @@ public:
 private:
     ModbusIP _modbus;
     Preferences _preferences;
+    bool _initialized = false;
+    InverterConfig _config;
+    InverterConfig _pendingConfig;
+    bool _hasPendingConfig = false;
+    bool _savingConfig = false;
+#ifdef ESP32
+    mutable portMUX_TYPE _configMux = portMUX_INITIALIZER_UNLOCKED;
+#endif
     uint64_t _lastUpdate = 0;
-    uint16_t _batteryStateOfChargeRaw = 0;
-    uint16_t _batteryChargePowerRaw[2] = {0, 0};
-    uint16_t _plantPowerRaw[2] = {0, 0};
-    uint16_t _powerMeterActivePowerRaw[2] = {0, 0};
+    uint16_t _telemetryRaw[TELEMETRY_COUNT][2] = {};
+    uint16_t _batteryStateOfCharge = 0;
+    int32_t _batteryChargePower = 0;
+    int32_t _plantPower = 0;
+    int32_t _gridPower = 0;
+    bool _readingsReady = false;
+    bool _polling = false;
+    bool _pollFailed = false;
+    uint8_t _pendingReads = 0;
+    uint32_t _generation = 0;
     uint64_t _lastHistoryUpdate = 0;
     std::deque<int> _powerMeterActivePowerHistory;
     std::deque<int> _batteryStateOfChargeHistory;
@@ -70,6 +82,13 @@ private:
     void _updateHistory();
 
     int _minutesToN(unsigned int minutes) const;
+
+    void _lockConfig() const;
+    void _unlockConfig() const;
+    void _applyPendingConfig();
+    void _resetReadings();
+    void _startPoll();
+    void _readCompleted(Modbus::ResultCode event, uint32_t generation);
 };
 
 #endif //ESP_SOLAR_BOY_INVERTER_H

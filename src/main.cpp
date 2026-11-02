@@ -13,6 +13,8 @@
 #include "WiFiPortal.h"
 
 #include "Inverter.h"
+#include "DevicePresets.h"
+#include "InverterSettings.h"
 #include "version.h"
 #include "SmartRelay.h"
 #include "LongPressButton.h"
@@ -69,6 +71,8 @@ void setup() {
         Serial.println("LittleFS Mount Failed");
         return;
     }
+    loadDevicePresets();
+    inverter.begin();
     provision();
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -139,21 +143,27 @@ void setup() {
         request->send(200, "text/plain", String(FIRMWARE_VERSION));
     });
     httpServer.on("/getInverterIp", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", String(inverter.ipAddress.toString()));
+        const auto config = inverter.getConfig();
+        request->send(200, "text/plain", IPAddress(config.ip).toString());
     });
     httpServer.on("/getInverterPort", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", String(inverter.port));
+        request->send(200, "text/plain", String(inverter.getConfig().port));
     });
     httpServer.on("/getInverterModbusUnit", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", String(inverter.modbusUnit));
+        request->send(200, "text/plain", String(inverter.getConfig().inverterUnit()));
     });
     httpServer.on("/getConnectionStatus", HTTP_GET, [](AsyncWebServerRequest *request) {
-        request->send(200, "text/plain", inverter.isConnected
-                                         ? R"(<div class="connection-indicator connected"></div><div class="connection-text connected-text">Sun2000 connected</div>)"
-                                         : R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Sun2000 disconnected</div>)");
+        request->send(200, "text/plain", inverter.hasValidReadings()
+            ? R"(<div class="connection-indicator connected"></div><div class="connection-text connected-text">Inverter connected</div>)"
+            : inverter.isConnected
+                ? R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Waiting for inverter data</div>)"
+                : R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Inverter disconnected</div>)");
     });
     httpServer.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
-        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html");
+        const auto config = inverter.getConfig();
+        AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html", false,
+            [config](const String &key) -> String { return inverterSettingsValue(key, config); });
+        response->addHeader("Cache-Control", "no-store");
         request->send(response);
     });
     httpServer.on("/settings", HTTP_POST, [](AsyncWebServerRequest *request){
@@ -161,10 +171,50 @@ void setup() {
             request->send(400, "application/html", "<h1>Bad request</h1>");
             return;
         }
-        inverter.setIpAddress(request->arg("settings-inverter-ip"));
-        inverter.setPort(request->arg("settings-inverter-port"));
-        inverter.setModbusUnit(request->arg("settings-inverter-modbus-unit"));
-        request->send(200, "text/plain", "Saved 👍");
+        auto config = inverter.getConfig();
+        // Parameter strings remain owned by the request throughout validation.
+        const auto posted = [request](const String &name) -> const char * {
+            const auto *parameter = request->getParam(name, true);
+            return parameter ? parameter->value().c_str() : nullptr;
+        };
+        const char *telemetryVersion = posted("settings-telemetry-version");
+        if (telemetryVersion && strcmp(telemetryVersion, "2") != 0) {
+            request->send(400, "text/plain", "Invalid telemetry form version.");
+            return;
+        }
+        InverterForm form;
+        form.ip = posted("settings-inverter-ip");
+        form.port = posted("settings-inverter-port");
+        form.preset = posted("settings-device-preset");
+        form.hasTelemetry = telemetryVersion != nullptr;
+        for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
+            const String prefix = "settings-" + String(telemetryKey(i)) + "-";
+            auto &mapping = form.telemetry[i];
+            mapping.overrideValue = posted(prefix + "override");
+            mapping.address = posted(prefix + "register");
+            mapping.unit = posted(prefix + "unit");
+            mapping.unitMode = "fixed";
+            mapping.valueType = posted(prefix + "type");
+            mapping.wordOrder = posted(prefix + "order");
+            mapping.scale = posted(prefix + "scale");
+            mapping.rejectUnavailable = posted(prefix + "unavailable");
+            mapping.invert = posted(prefix + "invert");
+        }
+        if (const char *error = parseInverterForm(form, config)) {
+            request->send(400, "text/plain", error);
+            return;
+        }
+        switch (inverter.saveConfig(config)) {
+            case Inverter::SaveResult::Saved:
+                request->send(200, "text/plain", "Saved 👍");
+                break;
+            case Inverter::SaveResult::Busy:
+                request->send(409, "text/plain", "Settings are being applied. Try saving again.");
+                break;
+            case Inverter::SaveResult::StorageError:
+                request->send(500, "text/plain", "Could not save settings.");
+                break;
+        }
     });
 
     sm0.setup(&inverter, &httpServer);

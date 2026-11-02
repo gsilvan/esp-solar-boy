@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="htmx.min.js"></script>
 </head>
-<body>
+<body class="settings-page">
 <header>
     <div class="logo-container">
         <img class="logo" src="logo.svg" alt="ESP Solar Boy Logo">
@@ -22,44 +22,115 @@
 <main>
     <h2>Settings</h2>
     <div id="message"></div>
-    <form method="post" hx-post="/settings" hx-target="#message" hx-swap="innerHTML">
+    <p>%PRESET_NOTICE%</p>
+    <form method="post" hx-post="/settings" hx-target="#message" hx-swap="innerHTML"
+          hx-on::after:request="if (event.detail.ctx.response &amp;&amp; !event.detail.ctx.response.raw.ok) document.getElementById('message').textContent = event.detail.ctx.text">
         <h3>Inverter</h3>
         <div class="field">
             <label for="settings-inverter-ip">IPv4:</label>
             <input class="input"
                    type="text"
+                   required
                    id="settings-inverter-ip"
                    name="settings-inverter-ip"
-                   value=""
-                   hx-get="/getInverterIp"
-                   hx-trigger="load"
-                   hx-on::after:request="this.value = event.detail.ctx.text">
+                   value="%INVERTER_IP%">
         </div>
         <div class="field">
             <label for="settings-inverter-port">Port:</label>
             <input class="input"
                    type="number"
-                   min="0"
-                   max="65536"
+                   required
+                   min="1"
+                   max="65535"
                    id="settings-inverter-port"
-                   name="settings-inverter-port" value=""
-                   hx-get="/getInverterPort"
-                   hx-trigger="load"
-                   hx-on::after:request="this.value = event.detail.ctx.text">
+                   name="settings-inverter-port"
+                   value="%INVERTER_PORT%">
         </div>
         <div class="field">
-            <label for="settings-inverter-modbus-unit">Modbus Unit:</label>
-            <input class="input"
-                   type="text"
-                   id="settings-inverter-modbus-unit"
-                   name="settings-inverter-modbus-unit"
-                   value=""
-                   hx-get="/getInverterModbusUnit"
-                   hx-trigger="load"
-                   hx-on::after:request="this.value = event.detail.ctx.text">
+            <label for="settings-device-preset">Device preset:</label>
+            <select class="input" id="settings-device-preset" name="settings-device-preset">
+                %DEVICE_PRESETS%
+            </select>
         </div>
-        <button>Save</button>
+        <input type="hidden"
+               name="settings-telemetry-version"
+               value="2">
+        <p id="generic-warning" %GENERIC_HIDDEN%>This preset uses placeholder registers. Configure and enable overrides for all four readings before automatic relay control can run.</p>
+        <details>
+            <summary>Advanced telemetry settings</summary>
+            <div class="telemetry-table-container"
+                 role="region"
+                 aria-label="Telemetry mappings"
+                 tabindex="0">
+                <table class="telemetry-table">
+                    <caption class="visually-hidden">Telemetry register mappings</caption>
+                    <thead>
+                    <tr>
+                        <th scope="col">Reading</th>
+                        <th scope="col">Override</th>
+                        <th scope="col">Holding register</th>
+                        <th scope="col">Modbus unit</th>
+                        <th scope="col">Value format</th>
+                        <th scope="col">Scale</th>
+                        <th scope="col">Invert sign</th>
+                        <th scope="col">Ignore Huawei 'no data' values</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    %SOC_FIELDS%
+                    %BATTERY_FIELDS%
+                    %PLANT_FIELDS%
+                    %GRID_FIELDS%
+                    </tbody>
+                </table>
+            </div>
+        </details>
+        <button type="submit">Save</button>
     </form>
+    <script>
+        (() => {
+            const preset = document.getElementById('settings-device-preset');
+            const keys = ['soc', 'battery', 'plant', 'grid'];
+            const field = (key, name) => document.getElementById(`settings-${key}-${name}`);
+            const presetDefaults = () => {
+                const json = preset.selectedOptions[0].dataset.defaults;
+                return json ? JSON.parse(json) : null;
+            };
+            const restoreMapping = (key, mapping) => {
+                Object.entries(mapping).forEach(([name, value]) => {
+                    if (typeof value === 'boolean') field(key, name).checked = value;
+                    else field(key, name).value = value;
+                });
+            };
+            const updateFields = key => {
+                const disabled = !field(key, 'override').checked;
+                ['register', 'unit', 'type', 'order', 'scale', 'invert', 'unavailable']
+                    .forEach(name => field(key, name).disabled = disabled);
+                field(key, 'register').max = ['u16', 'i16'].includes(field(key, 'type').value) ? '65535' : '65534';
+            };
+            preset.addEventListener('change', () => {
+                const defaults = presetDefaults();
+                if (!defaults) return;
+                document.getElementById('generic-warning').hidden = !defaults.requiresOverrides;
+                keys.forEach((key, index) => {
+                    restoreMapping(key, defaults.telemetry[index]);
+                    field(key, 'override').checked = false;
+                    updateFields(key);
+                });
+            });
+            keys.forEach((key, index) => {
+                field(key, 'override').addEventListener('change', () => {
+                    const defaults = presetDefaults();
+                    if (!field(key, 'override').checked && defaults) {
+                        restoreMapping(key, defaults.telemetry[index]);
+                    }
+                    updateFields(key);
+                });
+                field(key, 'type').addEventListener('change', () => updateFields(key));
+                updateFields(key);
+            });
+        })();
+    </script>
 </main>
 </body>
 </html>
