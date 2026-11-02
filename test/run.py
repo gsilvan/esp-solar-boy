@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run host firmware regressions, settings interaction, and simulator checks."""
 import os
-import json
+import csv
 import tomllib
 from pathlib import Path
 import subprocess
@@ -12,20 +12,24 @@ os.chdir(ROOT)
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
 
 def verify_preset_files(directory):
-    with (directory / "presets.json").open() as source:
-        loaded = json.load(source)
-    definitions = [tomllib.loads(path.read_text()) for path in (ROOT / "data" / "presets").glob("*.toml")]
-    assert set(loaded) == {definition["id"] for definition in definitions}
-    for definition in definitions:
-        actual = loaded[definition["id"]]
-        assert actual["requiresOverrides"] == definition["requires_overrides"]
-        for index, key in enumerate(("soc", "battery", "plant", "grid")):
-            expected, value = definition[key], actual["telemetry"][index]
-            for field in ("register", "unit", "type", "scale", "invert"):
-                assert str(value[field]) == str(expected[field]), (key, field)
-            assert value["order"] == expected["word_order"]
-            assert value["unavailable"] == expected["ignore_no_data"]
-            assert not value["unavailable"]
+    definitions = {config["id"]: config for path in (ROOT / "data" / "presets").glob("*.toml")
+                   for config in [tomllib.loads(path.read_text())]}
+    with (directory / "presets.tsv").open() as source:
+        loaded = list(csv.DictReader(source, delimiter="\t"))
+    assert len(loaded) == len(definitions) * 4
+    assert {row["preset"] for row in loaded} == set(definitions)
+    for row in loaded:
+        definition = definitions[row["preset"]]
+        expected = definition[row["reading"]]
+        assert bool(int(row["requires_overrides"])) == definition["requires_overrides"]
+        for field in ("register", "unit"):
+            assert int(row[field]) == expected[field]
+        assert row["type"] == expected["type"]
+        assert row["order"] == expected["word_order"]
+        assert float(row["scale"]) == expected["scale"]
+        assert bool(int(row["invert"])) == expected["invert"]
+        assert bool(int(row["unavailable"])) == expected["ignore_no_data"]
+        assert not expected["ignore_no_data"]
 
 
 with tempfile.TemporaryDirectory(prefix="solarboy-tests-") as output:

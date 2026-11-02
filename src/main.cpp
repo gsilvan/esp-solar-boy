@@ -63,6 +63,31 @@ static void resetWifi() {
     ESP.restart();
 }
 
+static InverterForm readInverterForm(AsyncWebServerRequest *request, bool post) {
+    // Parameter strings stay owned by the request while the form is validated.
+    const auto parameter = [request, post](const String &name) -> const char * {
+        const auto *value = request->getParam(name, post);
+        return value ? value->value().c_str() : nullptr;
+    };
+    InverterForm form;
+    form.ip = parameter("settings-inverter-ip");
+    form.port = parameter("settings-inverter-port");
+    form.preset = parameter("settings-device-preset");
+    for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
+        const String prefix = "settings-" + String(telemetryKey(i)) + "-";
+        auto &mapping = form.telemetry[i];
+        mapping.overrideValue = parameter(prefix + "override");
+        mapping.address = parameter(prefix + "register");
+        mapping.unit = parameter(prefix + "unit");
+        mapping.valueType = parameter(prefix + "type");
+        mapping.wordOrder = parameter(prefix + "order");
+        mapping.scale = parameter(prefix + "scale");
+        mapping.rejectUnavailable = parameter(prefix + "unavailable");
+        mapping.invert = parameter(prefix + "invert");
+    }
+    return form;
+}
+
 void setup() {
     Serial.begin(115200);
     Serial.print("Firmware v");
@@ -157,7 +182,13 @@ void setup() {
                 : R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Inverter disconnected</div>)");
     });
     httpServer.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
-        const auto config = inverter.getConfig();
+        auto config = inverter.getConfig();
+        const String reading = request->arg("reading");
+        if (const char *error = previewTelemetry(readInverterForm(request, false),
+                request->hasParam("reading") ? reading.c_str() : nullptr, config)) {
+            request->send(400, "text/plain", error);
+            return;
+        }
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html", false,
             [config](const String &key) -> String { return inverterSettingsValue(key, config); });
         response->addHeader("Cache-Control", "no-store");
@@ -169,32 +200,12 @@ void setup() {
             return;
         }
         auto config = inverter.getConfig();
-        // Parameter strings remain owned by the request throughout validation.
-        const auto posted = [request](const String &name) -> const char * {
-            const auto *parameter = request->getParam(name, true);
-            return parameter ? parameter->value().c_str() : nullptr;
-        };
-        const char *telemetryVersion = posted("settings-telemetry-version");
-        if (!telemetryVersion || strcmp(telemetryVersion, "3") != 0) {
+        const auto *version = request->getParam("settings-telemetry-version", true);
+        if (!version || version->value() != "3") {
             request->send(400, "text/plain", "Invalid telemetry form version.");
             return;
         }
-        InverterForm form;
-        form.ip = posted("settings-inverter-ip");
-        form.port = posted("settings-inverter-port");
-        form.preset = posted("settings-device-preset");
-        for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
-            const String prefix = "settings-" + String(telemetryKey(i)) + "-";
-            auto &mapping = form.telemetry[i];
-            mapping.overrideValue = posted(prefix + "override");
-            mapping.address = posted(prefix + "register");
-            mapping.unit = posted(prefix + "unit");
-            mapping.valueType = posted(prefix + "type");
-            mapping.wordOrder = posted(prefix + "order");
-            mapping.scale = posted(prefix + "scale");
-            mapping.rejectUnavailable = posted(prefix + "unavailable");
-            mapping.invert = posted(prefix + "invert");
-        }
+        const auto form = readInverterForm(request, true);
         if (const char *error = parseInverterForm(form, config)) {
             request->send(400, "text/plain", error);
             return;

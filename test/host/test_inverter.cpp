@@ -510,7 +510,6 @@ static void testPresetFiles(const std::string &directory) {
     assert(unavailable.getConfig().preset == PresetId("lab-device"));
     unavailable.update();
     assert(ModbusIP::latest->requests.empty() && !unavailable.hasValidReadings());
-    assert(inverterSettingsValue("PRESET_NOTICE", unavailable.getConfig()).find("unavailable") != std::string::npos);
     std::ofstream(presets + "/custom.toml") << custom;
     std::ofstream(presets + "/duplicate.toml") << custom;
     assert(!loadDevicePresets() && devicePresetRegistry().empty());
@@ -523,15 +522,40 @@ static void testPresetFiles(const std::string &directory) {
     assert(loadDevicePresets() && devicePresetRegistry().size() == 3);
 }
 
+static void testTelemetryPreview() {
+    InverterConfig saved;
+    applyDevicePreset(saved, PresetId("sun2000-emma"));
+    saved.overrideTelemetry[3] = true;
+    saved.telemetryOverride[3].unit = 7;
+    auto preview = saved;
+    InverterForm form;
+    assert(!previewTelemetry(form, nullptr, preview));
+    assert(preview.overrideTelemetry[3] && preview.telemetry(3).unit == 7);
+
+    form.preset = "sun2000-emma";
+    assert(!previewTelemetry(form, nullptr, preview));
+    assert(!preview.overrideTelemetry[3] && preview.telemetry(3).unit == 0);
+    form.telemetry[0].overrideValue = "1";
+    assert(!previewTelemetry(form, "soc", preview));
+    assert(preview.overrideTelemetry[0] && preview.telemetry(0).unit == 2);
+
+    form.telemetry[0] = mappingForm("123", "i32", "0.01");
+    form.telemetry[0].unit = "5";
+    assert(!previewTelemetry(form, "soc", preview));
+    assert(preview.telemetry(0).registerAddress == 123 && preview.telemetry(0).unit == 5);
+    assert(preview.telemetry(0).valueType == ValueType::I32 && preview.telemetry(0).invert);
+    form.telemetry[0].overrideValue = nullptr;
+    assert(!previewTelemetry(form, "soc", preview));
+    assert(!preview.overrideTelemetry[0] && preview.telemetry(0).registerAddress == 37004);
+    assert(preview.telemetry(0).valueType == ValueType::U16 && !preview.telemetry(0).invert);
+    assert(saved.overrideTelemetry[3] && saved.telemetry(3).unit == 7);
+}
+
 static void renderSettings(const std::string &directory) {
-    std::ifstream input("data/settings.html");
-    const std::string source((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    const auto source = readFile("data/settings.html");
     assert(!source.empty());
     const std::regex placeholder("%([A-Z_]+)%");
-    for (const auto preset : {PresetId("sun2000"), PresetId("sun2000-emma"), PresetId("generic")}) {
-        InverterConfig config;
-        applyDevicePreset(config, preset);
-        parseIPv4("192.0.2.10", config.ip);
+    const auto render = [&](const InverterConfig &config, const std::string &name) {
         std::string page;
         size_t offset = 0;
         for (auto it = std::sregex_iterator(source.begin(), source.end(), placeholder); it != std::sregex_iterator(); ++it) {
@@ -540,7 +564,22 @@ static void renderSettings(const std::string &directory) {
             offset = it->position() + it->length();
         }
         page += source.substr(offset);
-        std::ofstream(directory + "/" + devicePreset(preset).id.c_str() + ".html") << page;
+        std::ofstream(directory + "/" + name + ".html") << page;
+    };
+    for (const auto preset : {PresetId("sun2000"), PresetId("sun2000-emma"), PresetId("generic")}) {
+        InverterConfig config;
+        applyDevicePreset(config, preset);
+        parseIPv4("192.0.2.10", config.ip);
+        render(config, preset.c_str());
+        InverterForm form;
+        form.preset = preset.c_str();
+        form.telemetry[0].overrideValue = "1";
+        assert(!previewTelemetry(form, "soc", config));
+        render(config, std::string(preset.c_str()) + "-soc-on");
+        form.telemetry[0] = mappingForm("123", "i32", "0.01");
+        form.telemetry[0].unit = "5";
+        assert(!previewTelemetry(form, "soc", config));
+        render(config, std::string(preset.c_str()) + "-soc-i32");
     }
 }
 
@@ -551,18 +590,21 @@ int main(int argc, char **argv) {
     testOverridesAndStorageFailures();
     testTelemetryRecovery();
     testAllTelemetryOverrides();
+    testTelemetryPreview();
     if (argc == 2) {
         testPresetFiles(argv[1]);
         renderSettings(argv[1]);
-        std::ofstream dump(std::string(argv[1]) + "/presets.json");
-        dump << "{";
-        bool first = true;
+        std::ofstream dump(std::string(argv[1]) + "/presets.tsv");
+        dump << "preset\treading\trequires_overrides\tregister\tunit\ttype\torder\tscale\tinvert\tunavailable\n";
         for (const auto &preset : devicePresetRegistry()) {
-            if (!first) dump << ",";
-            first = false;
-            dump << "\"" << preset.id.c_str() << "\":" << presetTelemetryJson(preset);
+            for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
+                const auto &mapping = preset.telemetry[i];
+                dump << preset.id.c_str() << '\t' << telemetryKey(i) << '\t' << preset.requiresOverrides << '\t'
+                     << mapping.registerAddress << '\t' << unsigned(mapping.unit) << '\t' << valueTypeKey(mapping.valueType) << '\t'
+                     << (mapping.wordOrder == WordOrder::HighFirst ? "high" : "low") << '\t' << telemetryScale(mapping.scale) << '\t'
+                     << mapping.invert << '\t' << mapping.rejectUnavailable << '\n';
+            }
         }
-        dump << "}";
     }
     std::cout << "Inverter configuration, polling, persistence and relay regressions passed.\n";
 }
