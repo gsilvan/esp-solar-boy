@@ -2,7 +2,7 @@
 """Run host firmware regressions, settings interaction, and simulator checks."""
 import os
 import csv
-import tomllib
+import json
 from pathlib import Path
 import subprocess
 import tempfile
@@ -10,10 +10,13 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 os.chdir(ROOT)
 os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+ARDUINO_JSON = ROOT / ".pio" / "libdeps" / "esp32" / "ArduinoJson" / "src"
+if not (ARDUINO_JSON / "ArduinoJson.h").exists():
+    raise SystemExit("Install dependencies with 'pio pkg install -e esp32' before running tests.")
 
 def verify_preset_files(directory):
-    definitions = {config["id"]: config for path in (ROOT / "data" / "presets").glob("*.toml")
-                   for config in [tomllib.loads(path.read_text())]}
+    definitions = {config["id"]: config for path in (ROOT / "data" / "presets").glob("*.json")
+                   for config in [json.loads(path.read_text())]}
     with (directory / "presets.tsv").open() as source:
         loaded = list(csv.DictReader(source, delimiter="\t"))
     assert len(loaded) == len(definitions) * 4
@@ -40,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix="solarboy-tests-") as output:
         subprocess.run([
             "g++", "-std=c++11", "-D" + platform, "-Wall", "-Wextra", "-Werror", "-Wno-attributes",
             "-fsanitize=undefined,address", "-fno-omit-frame-pointer", "-g",
-            "-Itest/host/stubs", "-Isrc", "-Iinclude", "test/host/test_inverter.cpp",
+            "-Itest/host/stubs", "-Isrc", "-Iinclude", "-I" + str(ARDUINO_JSON), "test/host/test_inverter.cpp",
             "src/Inverter.cpp", "src/SmartRelay.cpp", "src/DevicePresets.cpp", "-o", executable,
         ], check=True)
         subprocess.run([executable, str(directory)], check=True)

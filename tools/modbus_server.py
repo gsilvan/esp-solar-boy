@@ -9,7 +9,7 @@ import asyncio
 import argparse
 import logging
 import struct
-import tomllib
+import json
 from pathlib import Path
 from pymodbus import FramerType
 from pymodbus.server import ModbusTcpServer
@@ -109,9 +109,9 @@ def make_device(unit, registers):
 
 def load_presets():
     presets = {}
-    for path in sorted((Path(__file__).resolve().parents[1] / "data" / "presets").glob("*.toml")):
+    for path in sorted((Path(__file__).resolve().parents[1] / "data" / "presets").glob("*.json")):
         with path.open("rb") as source:
-            config = tomllib.load(source)
+            config = json.load(source)
         if config["id"] in presets:
             raise ValueError(f"Duplicate preset id: {config['id']}")
         presets[config["id"]] = config

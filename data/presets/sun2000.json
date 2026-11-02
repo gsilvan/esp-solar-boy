@@ -1,0 +1,41 @@
+{
+  "id": "sun2000",
+  "name": "Huawei SUN2000",
+  "requires_overrides": false,
+  "soc": {
+    "register": 37004,
+    "unit": 1,
+    "type": "u16",
+    "word_order": "high",
+    "scale": 0.1,
+    "invert": false,
+    "ignore_no_data": false
+  },
+  "battery": {
+    "register": 37001,
+    "unit": 1,
+    "type": "i32",
+    "word_order": "high",
+    "scale": 1,
+    "invert": false,
+    "ignore_no_data": false
+  },
+  "plant": {
+    "register": 32064,
+    "unit": 1,
+    "type": "i32",
+    "word_order": "high",
+    "scale": 1,
+    "invert": false,
+    "ignore_no_data": false
+  },
+  "grid": {
+    "register": 37113,
+    "unit": 1,
+    "type": "i32",
+    "word_order": "high",
+    "scale": 1,
+    "invert": false,
+    "ignore_no_data": false
+  }
+}

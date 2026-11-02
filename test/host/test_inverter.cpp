@@ -6,7 +6,6 @@
 #include <sys/stat.h>
 #include "Inverter.h"
 #include "DevicePresets.h"
-#include "PresetToml.h"
 #include "InverterSettings.h"
 #include "SmartRelay.h"
 
@@ -430,51 +429,50 @@ static std::string replaceOnce(std::string source, const std::string &from, cons
 }
 
 static void testPresetFiles(const std::string &directory) {
-    const auto source = readFile("data/presets/sun2000-emma.toml");
+    const auto source = readFile("data/presets/sun2000-emma.json");
     DevicePreset parsed;
     const char *error;
-    assert(parseDevicePresetToml(source.c_str(), source.size(), parsed, error));
+    assert(parseDevicePresetJson(source.c_str(), source.size(), parsed, error));
     assert(parsed.id == PresetId("sun2000-emma") && parsed.telemetry[0].unit == 2);
     assert(parsed.telemetry[3].invert && parsed.telemetry[3].unit == 0);
     const auto rejects = [&](const std::string &invalid) {
-        assert(!parseDevicePresetToml(invalid.c_str(), invalid.size(), parsed, error));
+        assert(!parseDevicePresetJson(invalid.c_str(), invalid.size(), parsed, error));
         assert(error && parsed.id == PresetId("sun2000-emma"));
     };
-    rejects(replaceOnce(source, "unit = 2", "unit = 248"));
-    rejects(replaceOnce(source, "unit = 2", "unit = 02"));
-    rejects(replaceOnce(source, "unit = 2", "unit = 2.0"));
-    rejects(replaceOnce(source, "unit = 2\n", ""));
-    rejects(replaceOnce(source, "register = 31657", "register = 65535"));
-    rejects(replaceOnce(source, "scale = 0.1", "scale = 0"));
-    rejects(replaceOnce(source, "scale = 0.1", "scale = nan"));
-    rejects(replaceOnce(source, "scale = 0.1", "scale = 1e999"));
-    rejects(replaceOnce(source, "invert = true", "invert = 1"));
-    rejects(replaceOnce(source, "[soc]", "[unknown]"));
-    rejects(replaceOnce(source, "[soc]", "[soc]\n[soc]"));
-    rejects(replaceOnce(source, "[soc]", "unexpected = 1\n[soc]"));
-    rejects(replaceOnce(source, "[soc]", "[soc]\nkind = \"input\""));
-    rejects(replaceOnce(source, "[soc]", "default_unit = 2\n[soc]"));
-    rejects(replaceOnce(source, "[soc]", "[soc]\nunit_mode = \"inverter\""));
-    rejects(replaceOnce(source, "ignore_no_data = false\n", ""));
-    rejects(source.substr(0, source.find("[grid]")));
-    rejects(replaceOnce(source, "name = \"Huawei SUN2000 + EMMA built-in meter\"", "name = \"Unclosed"));
-    rejects(replaceOnce(source, "name = \"Huawei SUN2000 + EMMA built-in meter\"", "name = \"" + std::string(260, 'x') + "\""));
-    auto readable = replaceOnce(source, "register = 37004", "register = 37_004 # inline comment");
-    readable = replaceOnce(readable, "scale = 0.1", "scale = 1e-1");
-    readable = replaceOnce(readable, "unit = 2", "unit = +2");
-    readable = replaceOnce(readable, "name = \"Huawei SUN2000 + EMMA built-in meter\"", "name = 'EMMA # literal label'");
-    assert(parseDevicePresetToml(readable.c_str(), readable.size(), parsed, error));
-    assert(std::string(parsed.label) == "EMMA # literal label" && parsed.telemetry[0].registerAddress == 37004);
+    rejects(replaceOnce(source, "\"unit\": 2", "\"unit\": 248"));
+    rejects(replaceOnce(source, "\"unit\": 2", "\"unit\": -1"));
+    rejects(replaceOnce(source, "\"unit\": 2", "\"unit\": 2.0"));
+    rejects(replaceOnce(source, "\"unit\": 2,", ""));
+    rejects(replaceOnce(source, "\"register\": 31657", "\"register\": 65535"));
+    rejects(replaceOnce(source, "\"scale\": 0.1", "\"scale\": 0"));
+    rejects(replaceOnce(source, "\"scale\": 0.1", "\"scale\": -1"));
+    rejects(replaceOnce(source, "\"scale\": 0.1", "\"scale\": \"0.1\""));
+    rejects(replaceOnce(source, "\"scale\": 0.1", "\"scale\": 1e999"));
+    rejects(replaceOnce(source, "\"invert\": true", "\"invert\": 1"));
+    rejects(replaceOnce(source, "\"soc\":", "\"unknown\":"));
+    rejects(replaceOnce(source, "{", "{\"default_unit\": 2,"));
+    rejects(replaceOnce(source, "\"soc\": {", "\"soc\": {\"unit_mode\": \"inverter\","));
+    rejects(replaceOnce(source, ",\n    \"ignore_no_data\": false", ""));
+    rejects(replaceOnce(source, "\"type\": \"i32\"", "\"type\": \"unknown\""));
+    rejects(replaceOnce(source, "\"word_order\": \"high\"", "\"word_order\": \"unknown\""));
+    rejects(replaceOnce(source, "\"name\": \"Huawei SUN2000 + EMMA built-in meter\"", "\"name\": 1"));
+    rejects(replaceOnce(source, "\"name\": \"Huawei SUN2000 + EMMA built-in meter\"", "\"name\": \"" + std::string(96, 'x') + "\""));
+    rejects(source.substr(0, source.size() / 2));
+    rejects("not JSON");
+    auto readable = replaceOnce(source, "\"scale\": 0.1", "\"scale\": 1e-1");
+    readable = replaceOnce(readable, "Huawei SUN2000 + EMMA built-in meter", "EMMA\\u0020label");
+    assert(parseDevicePresetJson(readable.c_str(), readable.size(), parsed, error));
+    assert(std::string(parsed.label) == "EMMA label" && parsed.telemetry[0].registerAddress == 37004);
     std::string crlf;
     for (char c : source) { if (c == '\n') crlf += '\r'; crlf += c; }
-    assert(parseDevicePresetToml(crlf.c_str(), crlf.size(), parsed, error));
+    assert(parseDevicePresetJson(crlf.c_str(), crlf.size(), parsed, error));
 
     const auto presets = directory + "/presets";
     assert(mkdir(presets.c_str(), 0700) == 0);
     auto custom = replaceOnce(source, "sun2000-emma", "lab-device");
-    custom = replaceOnce(custom, "unit = 2", "unit = 3");
-    custom = replaceOnce(custom, "register = 37004", "register = 123");
-    std::ofstream(presets + "/custom.toml") << custom;
+    custom = replaceOnce(custom, "\"unit\": 2", "\"unit\": 3");
+    custom = replaceOnce(custom, "\"register\": 37004", "\"register\": 123");
+    std::ofstream(presets + "/custom.json") << custom;
     std::ofstream(presets + "/ignored.txt") << "not a preset";
     LittleFS.root = directory;
     assert(loadDevicePresets());
@@ -493,9 +491,9 @@ static void testPresetFiles(const std::string &directory) {
     assert(ModbusIP::latest->requests[0].address == 123 && ModbusIP::latest->requests[0].unit == 3);
     assert(ModbusIP::latest->requests[1].unit == 2 && ModbusIP::latest->requests[2].unit == 2);
     assert(ModbusIP::latest->requests[3].unit == 0);
-    custom = replaceOnce(custom, "register = 123", "register = 124");
-    custom = replaceOnce(custom, "unit = 3", "unit = 4");
-    std::ofstream(presets + "/custom.toml") << custom;
+    custom = replaceOnce(custom, "\"register\": 123", "\"register\": 124");
+    custom = replaceOnce(custom, "\"unit\": 3", "\"unit\": 4");
+    std::ofstream(presets + "/custom.json") << custom;
     assert(loadDevicePresets());
     Inverter changedFile;
     changedFile.begin();
@@ -503,18 +501,18 @@ static void testPresetFiles(const std::string &directory) {
     assert(changedFile.getConfig().preset == PresetId("lab-device"));
     assert(ModbusIP::latest->requests[0].address == 124); // File defaults apply to non-overridden telemetry.
     assert(ModbusIP::latest->requests[0].unit == 4); // The preset's unit supersedes the saved unit.
-    std::ofstream(presets + "/custom.toml") << "invalid = true";
+    std::ofstream(presets + "/custom.json") << "{\"invalid\":true}";
     assert(!loadDevicePresets() && devicePresetRegistry().empty());
     Inverter unavailable;
     unavailable.begin();
     assert(unavailable.getConfig().preset == PresetId("lab-device"));
     unavailable.update();
     assert(ModbusIP::latest->requests.empty() && !unavailable.hasValidReadings());
-    std::ofstream(presets + "/custom.toml") << custom;
-    std::ofstream(presets + "/duplicate.toml") << custom;
+    std::ofstream(presets + "/custom.json") << custom;
+    std::ofstream(presets + "/duplicate.json") << custom;
     assert(!loadDevicePresets() && devicePresetRegistry().empty());
-    assert(std::remove((presets + "/duplicate.toml").c_str()) == 0);
-    std::ofstream(presets + "/invalid.toml") << "bad file";
+    assert(std::remove((presets + "/duplicate.json").c_str()) == 0);
+    std::ofstream(presets + "/invalid.json") << "bad file";
     assert(!loadDevicePresets() && findDevicePreset("lab-device"));
     LittleFS.root = directory + "/missing";
     assert(!loadDevicePresets() && devicePresetRegistry().empty());
