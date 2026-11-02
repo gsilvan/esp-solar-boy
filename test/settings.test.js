@@ -2,10 +2,16 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
 const attribute = (tag, name) => new RegExp(`\\b${name}="([^"]*)"`).exec(tag)?.[1];
+const selectedValue = select => {
+    const options = [...select.matchAll(/<option\b[^>]*>/g)].filter(([tag]) => /\sselected(?:\s|>)/.test(tag));
+    assert.equal(options.length, 1);
+    return attribute(options[0][0], 'value');
+};
 const keys = ['soc', 'battery', 'plant', 'grid'];
 for (const name of ['sun2000', 'sun2000-emma', 'generic']) {
     const html = fs.readFileSync(`${process.argv[2]}/${name}.html`, 'utf8');
     assert(!/%[A-Z_]+%/.test(html), 'Every firmware placeholder must render');
+    assert(!/\{\{[A-Z_]+\}\}/.test(html), 'Every partial variable must render');
     assert(!/<script>/.test(html), 'Settings behavior uses HTMX');
     assert(!html.includes('data-defaults'), 'Preset data stays on the server');
     const elements = {};
@@ -19,6 +25,8 @@ for (const name of ['sun2000', 'sun2000-emma', 'generic']) {
     assert.equal(attribute(selector, 'hx-select'), '#telemetry-settings');
     assert.equal(attribute(selector, 'hx-trigger'), 'change');
     assert.equal(attribute(selector, 'hx-params'), 'settings-device-preset');
+    const presetSelect = /<select\b[^>]*id="settings-device-preset"[\s\S]*?<\/select>/.exec(html)[0];
+    assert.equal(selectedValue(presetSelect), name);
     const rows = [...html.matchAll(/<tr id="telemetry-([^"]+)">([\s\S]*?)<\/tr>/g)];
     assert.equal(rows.length, 4);
     for (const [row, key] of rows) {
@@ -40,7 +48,22 @@ for (const name of ['sun2000', 'sun2000-emma', 'generic']) {
         }
         const oneWord = key === 'soc';
         assert.equal(attribute(field('register'), 'max'), oneWord ? '65535' : '65534');
+        const selects = [...row.matchAll(/<select\b[^>]*>[\s\S]*?<\/select>/g)].map(([select]) => select);
+        assert.equal(selectedValue(selects[0]), oneWord ? 'u16' : 'i32');
+        assert.equal(selectedValue(selects[1]), 'high');
     }
     assert(keys.every(key => elements[`settings-${key}-override`]));
+    for (const mode of ['soc-on', 'soc-i32']) {
+        const preview = fs.readFileSync(`${process.argv[2]}/${name}-${mode}.html`, 'utf8');
+        assert(!/\{\{[A-Z_]+\}\}/.test(preview));
+        const soc = /<tr id="telemetry-soc">([\s\S]*?)<\/tr>/.exec(preview)[1];
+        assert(!/\sdisabled(?:\s|>)/.test(soc), 'Overrides enable the row controls');
+        const override = /<input\b[^>]*id="settings-soc-override"[^>]*>/.exec(soc)[0];
+        assert(/\schecked(?:\s|>)/.test(override));
+        const type = /<select\b[^>]*id="settings-soc-type"[\s\S]*?<\/select>/.exec(soc)[0];
+        assert.equal(selectedValue(type), mode === 'soc-on' ? 'u16' : 'i32');
+        const register = /<input\b[^>]*id="settings-soc-register"[^>]*>/.exec(soc)[0];
+        assert.equal(attribute(register, 'max'), mode === 'soc-on' ? '65535' : '65534');
+    }
 }
 console.log('Settings table values and HTMX controls passed.');

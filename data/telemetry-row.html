@@ -1,0 +1,108 @@
+<tr id="telemetry-{{KEY}}">
+    <th scope="row">{{LABEL}}</th>
+    <td class="telemetry-checkbox">
+        <input type="checkbox"
+               id="settings-{{KEY}}-override"
+               name="settings-{{KEY}}-override"
+               value="1"
+               {{OVERRIDE_CHECKED}}
+               hx-get="/settings?reading={{KEY}}"
+               hx-trigger="change"
+               hx-target="closest tr"
+               hx-select="#telemetry-{{KEY}}"
+               hx-swap="outerHTML"
+               hx-include="#settings-device-preset, closest tr">
+        <label class="visually-hidden" for="settings-{{KEY}}-override">Override preset mapping</label>
+    </td>
+    <td>
+        <div class="field">
+            <label class="visually-hidden" for="settings-{{KEY}}-register">Register address:</label>
+            <input class="input"
+                   type="number"
+                   required
+                   id="settings-{{KEY}}-register"
+                   name="settings-{{KEY}}-register"
+                   value="{{REGISTER}}"
+                   min="0"
+                   max="{{REGISTER_MAX}}"
+                   {{DISABLED}}>
+        </div>
+    </td>
+    <td>
+        <div class="field">
+            <label class="visually-hidden" for="settings-{{KEY}}-unit">Modbus unit:</label>
+            <input class="input"
+                   type="number"
+                   required
+                   id="settings-{{KEY}}-unit"
+                   name="settings-{{KEY}}-unit"
+                   value="{{UNIT}}"
+                   min="0"
+                   max="247"
+                   {{DISABLED}}>
+        </div>
+    </td>
+    <td>
+        <div class="field">
+            <label class="visually-hidden" for="settings-{{KEY}}-type">Value format:</label>
+            <select class="input"
+                    id="settings-{{KEY}}-type"
+                    name="settings-{{KEY}}-type"
+                    {{DISABLED}}
+                    hx-get="/settings?reading={{KEY}}"
+                    hx-trigger="change"
+                    hx-target="closest tr"
+                    hx-select="#telemetry-{{KEY}}"
+                    hx-swap="outerHTML"
+                    hx-include="#settings-device-preset, closest tr">
+                <option value="u16" {{U16_SELECTED}}>Unsigned 16-bit</option>
+                <option value="i16" {{I16_SELECTED}}>Signed 16-bit</option>
+                <option value="u32" {{U32_SELECTED}}>Unsigned 32-bit</option>
+                <option value="i32" {{I32_SELECTED}}>Signed 32-bit</option>
+                <option value="float32" {{FLOAT32_SELECTED}}>Float 32-bit</option>
+            </select>
+        </div>
+        <div class="field">
+            <label class="visually-hidden" for="settings-{{KEY}}-order">Word order (32-bit values):</label>
+            <select class="input"
+                    id="settings-{{KEY}}-order"
+                    name="settings-{{KEY}}-order"
+                    {{DISABLED}}>
+                <option value="high" {{HIGH_SELECTED}}>High word first</option>
+                <option value="low" {{LOW_SELECTED}}>Low word first</option>
+            </select>
+        </div>
+    </td>
+    <td>
+        <div class="field">
+            <label class="visually-hidden" for="settings-{{KEY}}-scale">Scale multiplier:</label>
+            <input class="input"
+                   type="number"
+                   required
+                   id="settings-{{KEY}}-scale"
+                   name="settings-{{KEY}}-scale"
+                   value="{{SCALE}}"
+                   min="0"
+                   step="any"
+                   {{DISABLED}}>
+        </div>
+    </td>
+    <td class="telemetry-checkbox">
+        <input type="checkbox"
+               id="settings-{{KEY}}-invert"
+               name="settings-{{KEY}}-invert"
+               value="1"
+               {{INVERT_CHECKED}}
+               {{DISABLED}}>
+        <label class="visually-hidden" for="settings-{{KEY}}-invert">Invert sign</label>
+    </td>
+    <td class="telemetry-checkbox">
+        <input type="checkbox"
+               id="settings-{{KEY}}-unavailable"
+               name="settings-{{KEY}}-unavailable"
+               value="1"
+               {{UNAVAILABLE_CHECKED}}
+               {{DISABLED}}>
+        <label class="visually-hidden" for="settings-{{KEY}}-unavailable">Ignore Huawei 'no data' values</label>
+    </td>
+</tr>

@@ -412,6 +412,8 @@ static std::string replaceOnce(std::string source, const std::string &from, cons
 }
 
 static void testPresetFiles(const std::string &directory) {
+    for (const auto *name : {"telemetry-row.html", "preset-option.html"})
+        std::ofstream(directory + "/" + name) << readFile(std::string("data/") + name);
     const auto source = readFile("data/presets/sun2000-emma.json");
     const auto presets = directory + "/presets";
     assert(mkdir(presets.c_str(), 0700) == 0);
@@ -426,7 +428,7 @@ static void testPresetFiles(const std::string &directory) {
     InverterConfig config;
     assert(applyDevicePreset(config, PresetId("lab-device")) && config.telemetry(0).unit == 3);
     assert(config.telemetry(0).registerAddress == 123);
-    assert(telemetryRow(config, 0).find("name=\"settings-soc-unit\"\n       value=\"3\"") != std::string::npos);
+    assert(std::regex_search(telemetryRow(config, 0), std::regex("name=\"settings-soc-unit\"\\s+value=\"3\"")));
     assert(inverterSettingsValue("DEVICE_PRESETS", config).find("lab-device") != std::string::npos);
     reset();
     Inverter customInverter;
