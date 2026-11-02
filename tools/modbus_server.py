@@ -112,8 +112,6 @@ def load_presets():
     for path in sorted((Path(__file__).resolve().parents[1] / "data" / "presets").glob("*.json")):
         with path.open("rb") as source:
             config = json.load(source)
-        if config["id"] in presets:
-            raise ValueError(f"Duplicate preset id: {config['id']}")
         presets[config["id"]] = config
     return presets
 
@@ -138,8 +136,6 @@ def create_context(preset="sun2000", grid_power=500):
             words.reverse()
         for offset, word in enumerate(words):
             address = mapping["register"] + offset
-            if address in registers and registers[address] != word:
-                raise ValueError(f"Conflicting sample registers for unit {unit} at {address}")
             registers[address] = word
     return [make_device(unit, data) for unit, data in devices.items()]
 

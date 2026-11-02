@@ -4,19 +4,18 @@
 #include "InverterConfig.h"
 #include "template.h"
 
-inline const char *previewTelemetry(const InverterForm &form, const char *reading, InverterConfig &config) {
-    if (!form.preset) return nullptr;
-    if (!applyDevicePreset(config, PresetId(form.preset))) return "Select a valid device preset.";
-    if (!reading) return nullptr;
+inline void previewTelemetry(const InverterForm &form, const char *reading, InverterConfig &config) {
+    if (!form.preset) return;
+    applyDevicePreset(config, PresetId(form.preset));
+    if (!reading) return;
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
         if (strcmp(reading, telemetryKey(i)) != 0) continue;
         const auto &submitted = form.telemetry[i];
         config.overrideTelemetry[i] = submitted.overrideValue != nullptr;
-        if (config.overrideTelemetry[i] && submitted.address &&
-            !parseTelemetryConfig(submitted, config.telemetryOverride[i])) return "Invalid telemetry mapping.";
-        return nullptr;
+        if (config.overrideTelemetry[i] && submitted.address)
+            parseTelemetryConfig(submitted, config.telemetryOverride[i]);
+        return;
     }
-    return "Unknown telemetry reading.";
 }
 
 inline String telemetryScale(double value) {
@@ -98,14 +97,9 @@ inline String inverterSettingsValue(const String &key, const InverterConfig &con
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i)
         if (key == fields[i]) return telemetryRow(config, i);
     if (key == "DEVICE_PRESETS") {
-        size_t count;
-        const auto *presets = devicePresets(count);
+        const auto &presets = devicePresetRegistry();
         String options;
-        if (!findDevicePreset(config.preset.c_str()))
-            options = "<option selected value=\"" + escapeHtml(config.preset.c_str()) + "\">Unavailable preset: " +
-                escapeHtml(config.preset.c_str()) + "</option>";
-        for (size_t i = 0; i < count; ++i) {
-            const auto &preset = presets[i];
+        for (const auto &preset : presets) {
             options += "<option value=\"" + String(preset.id.c_str()) + "\"";
             options += preset.id == config.preset ? " selected>" : ">";
             options += escapeHtml(preset.label) + "</option>";

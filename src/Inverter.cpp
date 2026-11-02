@@ -43,10 +43,7 @@ InverterConfig Inverter::getConfig() const {
 }
 
 Inverter::SaveResult Inverter::saveConfig(const InverterConfig &config) {
-    char record[INVERTER_CONFIG_RECORD_SIZE];
-    if (!encodeInverterConfig(config, record, sizeof(record))) {
-        return SaveResult::StorageError;
-    }
+    const String record = encodeInverterConfig(config);
     this->_lockConfig();
     if (this->_hasPendingConfig || this->_savingConfig) {
         this->_unlockConfig();
@@ -55,7 +52,7 @@ Inverter::SaveResult Inverter::saveConfig(const InverterConfig &config) {
     this->_savingConfig = true;
     this->_unlockConfig();
 
-    const bool saved = this->_preferences.putString("settings", record) == strlen(record);
+    const bool saved = this->_preferences.putString("settings", record) == record.length();
     this->_lockConfig();
     if (saved) {
         this->_pendingConfig = config;

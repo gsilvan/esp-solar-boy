@@ -177,18 +177,12 @@ void setup() {
     httpServer.on("/getConnectionStatus", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", inverter.hasValidReadings()
             ? R"(<div class="connection-indicator connected"></div><div class="connection-text connected-text">Inverter connected</div>)"
-            : inverter.isConnected
-                ? R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Waiting for inverter data</div>)"
-                : R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Inverter disconnected</div>)");
+            : R"(<div class="connection-indicator disconnected"></div><div class="connection-text disconnected-text">Inverter disconnected</div>)");
     });
     httpServer.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request){
         auto config = inverter.getConfig();
         const String reading = request->arg("reading");
-        if (const char *error = previewTelemetry(readInverterForm(request, false),
-                request->hasParam("reading") ? reading.c_str() : nullptr, config)) {
-            request->send(400, "text/plain", error);
-            return;
-        }
+        previewTelemetry(readInverterForm(request, false), reading.c_str(), config);
         AsyncWebServerResponse *response = request->beginResponse(LittleFS, "/settings.html", "text/html", false,
             [config](const String &key) -> String { return inverterSettingsValue(key, config); });
         response->addHeader("Cache-Control", "no-store");
@@ -200,11 +194,6 @@ void setup() {
             return;
         }
         auto config = inverter.getConfig();
-        const auto *version = request->getParam("settings-telemetry-version", true);
-        if (!version || version->value() != "3") {
-            request->send(400, "text/plain", "Invalid telemetry form version.");
-            return;
-        }
         const auto form = readInverterForm(request, true);
         if (const char *error = parseInverterForm(form, config)) {
             request->send(400, "text/plain", error);

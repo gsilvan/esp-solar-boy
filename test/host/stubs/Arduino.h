@@ -15,6 +15,8 @@ public:
     String(const std::string &s) : std::string(s) {}
     template<class T, typename std::enable_if<std::is_arithmetic<T>::value, int>::type = 0>
     String(T value) : std::string(std::to_string(value)) {}
+    size_t write(uint8_t value) { push_back(static_cast<char>(value)); return 1; }
+    size_t write(const uint8_t *data, size_t size) { append(reinterpret_cast<const char *>(data), size); return size; }
     long toInt() const { return std::strtol(c_str(), nullptr, 10); }
     void replace(const String &from, const String &to) {
         size_t at = 0;

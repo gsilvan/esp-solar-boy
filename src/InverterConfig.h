@@ -1,6 +1,8 @@
 #ifndef ESP_SOLAR_BOY_INVERTER_CONFIG_H
 #define ESP_SOLAR_BOY_INVERTER_CONFIG_H
 
+#include <Arduino.h>
+#include <ArduinoJson.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -25,7 +27,6 @@ public:
     bool operator!=(const PresetId &other) const { return !(*this == other); }
 };
 constexpr size_t TELEMETRY_COUNT = 4;
-constexpr size_t INVERTER_CONFIG_RECORD_SIZE = 512;
 
 inline const char *telemetryKey(size_t index) {
     static const char *keys[] = {"soc", "battery", "plant", "grid"};
@@ -66,12 +67,6 @@ struct DevicePreset {
 inline std::vector<DevicePreset> &devicePresetRegistry() {
     static std::vector<DevicePreset> presets;
     return presets;
-}
-
-inline const DevicePreset *devicePresets(size_t &count) {
-    const auto &presets = devicePresetRegistry();
-    count = presets.size();
-    return presets.data();
 }
 
 inline const DevicePreset *findDevicePreset(const char *key) {
@@ -121,14 +116,11 @@ inline bool applyDevicePreset(InverterConfig &config, const PresetId &id) {
 
 inline bool parseUnsigned(const char *text, uint32_t max, uint32_t &value) {
     if (!text || !*text) return false;
-    uint32_t result = 0;
-    for (const char *p = text; *p; ++p) {
-        if (*p < '0' || *p > '9') return false;
-        const uint32_t digit = *p - '0';
-        if (digit > max || result > (max - digit) / 10) return false;
-        result = result * 10 + digit;
-    }
-    value = result;
+    char *end;
+    errno = 0;
+    const auto parsed = strtoul(text, &end, 10);
+    if (*end || errno == ERANGE || parsed > max) return false;
+    value = parsed;
     return true;
 }
 
@@ -155,6 +147,31 @@ inline const char *valueTypeKey(ValueType type) {
     return keys[static_cast<size_t>(type)];
 }
 
+inline TelemetryConfig readTelemetryJson(JsonObjectConst object) {
+    TelemetryConfig mapping;
+    mapping.registerAddress = object["register"].as<uint16_t>();
+    mapping.unit = object["unit"].as<uint8_t>();
+    mapping.scale = object["scale"].as<double>();
+    mapping.invert = object["invert"].as<bool>();
+    mapping.rejectUnavailable = object["ignore_no_data"].as<bool>();
+    mapping.wordOrder = object["word_order"] == "low" ? WordOrder::LowFirst : WordOrder::HighFirst;
+    for (auto type : {ValueType::U16, ValueType::I16, ValueType::U32, ValueType::I32, ValueType::Float32})
+        if (object["type"] == valueTypeKey(type)) mapping.valueType = type;
+    return mapping;
+}
+
+inline void writeTelemetryJson(JsonObject object, const TelemetryConfig &mapping) {
+    object["register"] = mapping.registerAddress;
+    object["unit"] = mapping.unit;
+    object["type"] = valueTypeKey(mapping.valueType);
+    object["word_order"] = mapping.wordOrder == WordOrder::LowFirst ? "low" : "high";
+    char scale[32];
+    snprintf(scale, sizeof(scale), "%.17g", mapping.scale);
+    object["scale"] = serialized(scale);
+    object["invert"] = mapping.invert;
+    object["ignore_no_data"] = mapping.rejectUnavailable;
+}
+
 struct TelemetryForm {
     const char *overrideValue = nullptr;
     const char *address = nullptr;
@@ -179,14 +196,10 @@ inline bool parseTelemetryConfig(const TelemetryForm &form, TelemetryConfig &con
     if (strcmp(form.wordOrder, "high") == 0) parsed.wordOrder = WordOrder::HighFirst;
     else if (strcmp(form.wordOrder, "low") == 0) parsed.wordOrder = WordOrder::LowFirst;
     else return false;
-    for (const char *p = form.scale; *p; ++p)
-        if (!strchr("0123456789+-.eE", *p)) return false;
     char *end;
     errno = 0;
     parsed.scale = strtod(form.scale, &end);
     if (end == form.scale || *end || errno == ERANGE || !isfinite(parsed.scale) || parsed.scale <= 0) return false;
-    if (form.rejectUnavailable && strcmp(form.rejectUnavailable, "1") != 0) return false;
-    if (form.invert && strcmp(form.invert, "1") != 0) return false;
     parsed.rejectUnavailable = form.rejectUnavailable != nullptr;
     parsed.invert = form.invert != nullptr;
     parsed.registerAddress = address;
@@ -210,11 +223,9 @@ inline const char *parseInverterForm(const InverterForm &form, InverterConfig &c
     candidate.port = port;
     const auto *preset = findDevicePreset(form.preset);
     if (!preset) return "Select a valid device preset.";
-    if (preset->id != candidate.preset) applyDevicePreset(candidate, preset->id);
+    candidate.preset = preset->id;
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
         const auto &submitted = form.telemetry[i];
-        if (submitted.overrideValue && strcmp(submitted.overrideValue, "1") != 0)
-            return "Invalid telemetry override choice.";
         candidate.overrideTelemetry[i] = submitted.overrideValue != nullptr;
         candidate.telemetryOverride[i] = preset->telemetry[i];
         if (candidate.overrideTelemetry[i] && !parseTelemetryConfig(submitted, candidate.telemetryOverride[i]))
@@ -264,77 +275,33 @@ inline bool sameInverterSource(const InverterConfig &a, const InverterConfig &b)
     return true;
 }
 
-inline bool validInverterConfig(const InverterConfig &config) {
-    if (config.port == 0 || !findDevicePreset(config.preset.c_str())) return false;
+inline String encodeInverterConfig(const InverterConfig &config) {
+    DynamicJsonDocument document(2048);
+    char ip[16];
+    snprintf(ip, sizeof(ip), "%u.%u.%u.%u", config.ip[0], config.ip[1], config.ip[2], config.ip[3]);
+    document["ip"] = ip;
+    document["port"] = config.port;
+    document["preset"] = config.preset.c_str();
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
-        const auto mapping = config.telemetry(i);
-        if (mapping.unit > 247 ||
-            mapping.valueType > ValueType::Float32 || mapping.wordOrder > WordOrder::LowFirst ||
-            !isfinite(mapping.scale) || mapping.scale <= 0 || uint32_t(mapping.registerAddress) + mapping.words() > 65536) return false;
+        if (config.overrideTelemetry[i])
+            writeTelemetryJson(document["overrides"][telemetryKey(i)].to<JsonObject>(), config.telemetry(i));
     }
-    return true;
-}
-
-constexpr size_t CONFIG_HEADER_FIELDS = 4;
-constexpr size_t CONFIG_MAPPING_FIELDS = 8;
-constexpr size_t CONFIG_FIELD_COUNT = CONFIG_HEADER_FIELDS + TELEMETRY_COUNT * CONFIG_MAPPING_FIELDS;
-
-inline bool encodeInverterConfig(const InverterConfig &config, char *record, size_t length) {
-    if (!validInverterConfig(config)) return false;
-    int used = snprintf(record, length, "3|%u.%u.%u.%u|%u|%s", config.ip[0], config.ip[1], config.ip[2],
-        config.ip[3], config.port, config.preset.c_str());
-    if (used < 0 || size_t(used) >= length) return false;
-    for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
-        const auto mapping = config.telemetry(i);
-        const int size = snprintf(record + used, length - used, "|%u|%u|%u|%s|%s|%.17g|%u|%u",
-            config.overrideTelemetry[i] ? 1 : 0, mapping.registerAddress, mapping.unit,
-            valueTypeKey(mapping.valueType), mapping.wordOrder == WordOrder::LowFirst ? "low" : "high",
-            mapping.scale, mapping.rejectUnavailable ? 1 : 0, mapping.invert ? 1 : 0);
-        if (size < 0 || size_t(size) >= length - used) return false;
-        used += size;
-    }
-    return true;
+    String record;
+    serializeJson(document, record);
+    return record;
 }
 
 inline bool decodeInverterConfig(const char *record, InverterConfig &config) {
-    if (!record || strlen(record) >= INVERTER_CONFIG_RECORD_SIZE) return false;
-    char buffer[INVERTER_CONFIG_RECORD_SIZE];
-    strcpy(buffer, record);
-    char *fields[CONFIG_FIELD_COUNT];
-    size_t count = 1;
-    fields[0] = buffer;
-    while (char *separator = strchr(fields[count - 1], '|')) {
-        if (count == CONFIG_FIELD_COUNT) return false;
-        *separator = '\0';
-        fields[count++] = separator + 1;
-    }
-    if (count != CONFIG_FIELD_COUNT || strcmp(fields[0], "3") != 0) return false;
-
+    DynamicJsonDocument document(2048);
+    if (deserializeJson(document, record)) return false;
     InverterConfig parsed;
-    uint32_t port;
-    const PresetId id(fields[3]);
-    if (!*id.c_str() || strcmp(id.c_str(), fields[3]) || !parseIPv4(fields[1], parsed.ip) ||
-        !parseUnsigned(fields[2], 65535, port) || port == 0) return false;
-    for (const char *p = id.c_str(); *p; ++p)
-        if (!((*p >= 'a' && *p <= 'z') || (*p >= '0' && *p <= '9') || *p == '-' || *p == '_')) return false;
-    parsed.preset = id; // Keep unavailable selections so polling remains disabled.
-    parsed.port = port;
+    parseIPv4(document["ip"] | "0.0.0.0", parsed.ip);
+    parsed.port = document["port"].as<uint16_t>();
+    parsed.preset = PresetId(document["preset"].as<const char *>());
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
-        const auto mappingFields = fields + CONFIG_HEADER_FIELDS + i * CONFIG_MAPPING_FIELDS;
-        uint32_t overridden, unavailable, invert;
-        if (!parseUnsigned(mappingFields[0], 1, overridden) ||
-            !parseUnsigned(mappingFields[6], 1, unavailable) ||
-            !parseUnsigned(mappingFields[7], 1, invert)) return false;
-        TelemetryForm form;
-        form.address = mappingFields[1];
-        form.unit = mappingFields[2];
-        form.valueType = mappingFields[3];
-        form.wordOrder = mappingFields[4];
-        form.scale = mappingFields[5];
-        form.rejectUnavailable = unavailable ? "1" : nullptr;
-        form.invert = invert ? "1" : nullptr;
-        parsed.overrideTelemetry[i] = overridden != 0;
-        if (!parseTelemetryConfig(form, parsed.telemetryOverride[i])) return false;
+        const auto object = document["overrides"][telemetryKey(i)].as<JsonObjectConst>();
+        parsed.overrideTelemetry[i] = !object.isNull();
+        if (parsed.overrideTelemetry[i]) parsed.telemetryOverride[i] = readTelemetryJson(object);
     }
     config = parsed;
     return true;
