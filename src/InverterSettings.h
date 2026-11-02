@@ -57,7 +57,7 @@ inline String telemetryRow(const InverterConfig &config, size_t index) {
     html += "</td><td>";
     html += telemetryInput(prefix + "register", "Register address", String(mapping.registerAddress), "min=\"0\"\n       max=\"65535\"", disabled);
     html += "</td><td>";
-    html += telemetryInput(prefix + "unit", "Modbus unit", String(mapping.unit(config.inverterUnit())), "min=\"0\"\n       max=\"247\"", disabled);
+    html += telemetryInput(prefix + "unit", "Modbus unit", String(mapping.unit), "min=\"0\"\n       max=\"247\"", disabled);
     html += "</td><td>";
     html += telemetrySelect(prefix + "type", "Value format", types, typeLabels, 5, valueTypeKey(mapping.valueType), disabled);
     html += telemetrySelect(prefix + "order", "Word order (32-bit values)", orders, orderLabels, 2, mapping.wordOrder == WordOrder::LowFirst ? "low" : "high", disabled);
@@ -75,7 +75,7 @@ inline String presetTelemetryJson(const DevicePreset &preset) {
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
         const auto &mapping = preset.telemetry[i];
         if (i) json += ",";
-        json += "{\"register\":\"" + String(mapping.registerAddress) + "\",\"unit\":\"" + String(mapping.unit(preset.defaultUnit));
+        json += "{\"register\":\"" + String(mapping.registerAddress) + "\",\"unit\":\"" + String(mapping.unit);
         json += "\",\"type\":\"" + String(valueTypeKey(mapping.valueType)) + "\",\"order\":\"";
         json += mapping.wordOrder == WordOrder::LowFirst ? "low" : "high";
         json += "\",\"scale\":\"" + telemetryScale(mapping.scale) + "\",\"invert\":";

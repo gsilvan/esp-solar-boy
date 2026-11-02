@@ -14,9 +14,6 @@ void Inverter::begin() {
 #else
     this->_preferences.begin("inverter", false);
 #endif
-    // Old installations have no device marker and retain SUN2000 defaults.
-    parseIPv4(this->_preferences.getString("ip", "").c_str(), this->_config.ip);
-    this->_config.port = this->_preferences.getUShort("port", 502);
     const String record = this->_preferences.getString("settings", "");
     decodeInverterConfig(record.c_str(), this->_config);
     this->ipAddress = IPAddress(this->_config.ip);
@@ -138,7 +135,7 @@ void Inverter::_startPoll() {
         const auto mapping = this->_config.telemetry(i);
         auto *raw = this->_telemetryRaw[i];
         const uint16_t transaction = this->_modbus.readHreg(this->ipAddress, mapping.registerAddress,
-            raw, mapping.words(), cb, mapping.unit(this->_config.inverterUnit()));
+            raw, mapping.words(), cb, mapping.unit);
         if (!transaction) this->_readCompleted(Modbus::EX_GENERAL_FAILURE, generation);
     }
 }

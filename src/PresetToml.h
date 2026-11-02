@@ -5,8 +5,8 @@
 
 namespace preset_toml {
 
-enum HeaderKey { Id, Name, DefaultUnit, RequiresOverrides, HeaderKeyCount };
-enum MappingKey { Register, UnitModeKey, Unit, Type, WordOrderKey, Scale, Invert, IgnoreNoData, MappingKeyCount };
+enum HeaderKey { Id, Name, RequiresOverrides, HeaderKeyCount };
+enum MappingKey { Register, Unit, Type, WordOrderKey, Scale, Invert, IgnoreNoData, MappingKeyCount };
 constexpr unsigned ALL_TABLES = (1u << TELEMETRY_COUNT) - 1;
 constexpr unsigned ALL_HEADER_KEYS = (1u << HeaderKeyCount) - 1;
 constexpr unsigned ALL_MAPPING_KEYS = (1u << MappingKeyCount) - 1;
@@ -150,7 +150,7 @@ inline bool parseDevicePresetToml(const char *text, size_t length, DevicePreset 
         char decoded[96];
         uint32_t numberValue;
         if (section < 0) {
-            static const char *const keys[] = {"id", "name", "default_unit", "requires_overrides"};
+            static const char *const keys[] = {"id", "name", "requires_overrides"};
             int index = -1;
             for (size_t i = 0; i < HeaderKeyCount; ++i) if (strcmp(keys[i], key) == 0) index = i;
             if (index < 0 || (header & (1 << index))) { error = "Unknown or duplicate preset key"; return false; }
@@ -163,21 +163,17 @@ inline bool parseDevicePresetToml(const char *text, size_t length, DevicePreset 
                 case Name:
                     if (!parseString(value, candidate.label, sizeof(candidate.label)) || !*candidate.label) return false;
                     break;
-                case DefaultUnit:
-                    if (!unsignedNumber(value, 247, numberValue)) return false;
-                    candidate.defaultUnit = numberValue;
-                    break;
                 case RequiresOverrides: if (!parseBoolean(value, candidate.requiresOverrides)) return false; break;
             }
             continue;
         }
-        static const char *const keys[] = {"register", "unit_mode", "unit", "type", "word_order", "scale", "invert", "ignore_no_data"};
+        static const char *const keys[] = {"register", "unit", "type", "word_order", "scale", "invert", "ignore_no_data"};
         int index = -1;
         for (size_t i = 0; i < MappingKeyCount; ++i) if (strcmp(keys[i], key) == 0) index = i;
         if (index < 0 || (seen[section] & (1 << index))) { error = "Unknown or duplicate telemetry key"; return false; }
         seen[section] |= 1 << index;
         auto &mapping = candidate.telemetry[section];
-        if (index == UnitModeKey || index == Type || index == WordOrderKey) {
+        if (index == Type || index == WordOrderKey) {
             if (!parseString(value, decoded, sizeof(decoded))) return false;
         }
         switch (index) {
@@ -185,14 +181,9 @@ inline bool parseDevicePresetToml(const char *text, size_t length, DevicePreset 
                 if (!unsignedNumber(value, 65535, numberValue)) return false;
                 mapping.registerAddress = numberValue;
                 break;
-            case UnitModeKey:
-                if (strcmp(decoded, "inverter") == 0) mapping.unitMode = UnitMode::Inverter;
-                else if (strcmp(decoded, "fixed") == 0) mapping.unitMode = UnitMode::Fixed;
-                else return false;
-                break;
             case Unit:
                 if (!unsignedNumber(value, 247, numberValue)) return false;
-                mapping.fixedUnit = numberValue;
+                mapping.unit = numberValue;
                 break;
             case Type: {
                 bool found = false;

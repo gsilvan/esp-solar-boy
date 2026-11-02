@@ -21,9 +21,6 @@ ModbusIP *ModbusIP::latest = nullptr;
 static void reset() {
     fakeMillis = 10000;
     Preferences::values.clear();
-    Preferences::values["inverter/ip"] = "192.0.2.10";
-    Preferences::values["inverter/port"] = "502";
-    Preferences::values["inverter/unit"] = "7"; // Obsolete global units must be ignored.
     Preferences::failWrites = false;
 }
 
@@ -44,7 +41,7 @@ static void replyToPoll(ModbusIP &bus, int32_t gridPower, Modbus::ResultCode gri
 static TelemetryForm mappingForm(const char *address = "31913", const char *type = "i32",
                                   const char *scale = "1", const char *invert = "1") {
     TelemetryForm form;
-    form.overrideValue = "1"; form.address = address; form.unitMode = "fixed"; form.unit = "0";
+    form.overrideValue = "1"; form.address = address; form.unit = "0";
     form.valueType = type; form.wordOrder = "high"; form.scale = scale;
     form.rejectUnavailable = "1"; form.invert = invert;
     return form;
@@ -60,16 +57,15 @@ static void testConfigAndDecoding() {
     for (const auto &preset : devicePresetRegistry())
         for (const auto &mapping : preset.telemetry) assert(!mapping.rejectUnavailable);
     InverterConfig config;
-    assert(config.telemetry(3).registerAddress == 37113 && config.telemetry(3).unit(7) == 7);
+    assert(config.telemetry(3).registerAddress == 37113 && config.telemetry(3).unit == 1);
     applyDevicePreset(config, PresetId("sun2000-emma"));
-    assert(config.inverterUnit() == 2);
-    assert(config.telemetry(3).registerAddress == 31657 && config.telemetry(3).unit(2) == 0);
+    assert(config.telemetry(3).registerAddress == 31657 && config.telemetry(3).unit == 0);
     assert(config.telemetry(3).invert);
     const uint16_t emmaRegisters[] = {37004, 37001, 32064};
     for (size_t i = 0; i < 3; ++i) {
         const auto mapping = config.telemetry(i);
         assert(mapping.registerAddress == emmaRegisters[i]);
-        assert(mapping.unit(config.inverterUnit()) == 2 && !mapping.invert);
+        assert(mapping.unit == 2 && !mapping.invert);
         assert(mapping.wordOrder == WordOrder::HighFirst);
         assert(mapping.valueType == (i == 0 ? ValueType::U16 : ValueType::I32));
         assert(mapping.scale == (i == 0 ? 0.1 : 1));
@@ -114,9 +110,8 @@ static void testConfigAndDecoding() {
 
     auto form = connectionForm();
     InverterConfig initial;
-    assert(!parseInverterForm(form, initial) && initial.inverterUnit() == 2);
+    assert(!parseInverterForm(form, initial) && initial.telemetry(0).unit == 2);
     assert(!parseInverterForm(form, config));
-    form.hasTelemetry = true;
     form.telemetry[3] = mappingForm();
     assert(!parseInverterForm(form, config));
     assert(config.overrideTelemetry[3] && config.telemetry(3).registerAddress == 31913);
@@ -133,9 +128,9 @@ static void testConfigAndDecoding() {
         auto badForm = form; badForm.port = bad; reject(badForm);
     }
     auto badForm = form; badForm.preset = "unknown"; reject(badForm);
+    badForm = form; badForm.preset = nullptr; reject(badForm);
     badForm = form; badForm.telemetry[3].address = "65535"; reject(badForm);
     badForm = form; badForm.telemetry[3].unit = "248"; reject(badForm);
-    badForm = form; badForm.telemetry[3].unitMode = "unknown"; reject(badForm);
     badForm = form; badForm.telemetry[3].valueType = "unknown"; reject(badForm);
     badForm = form; badForm.telemetry[3].wordOrder = "unknown"; reject(badForm);
     badForm = form; badForm.telemetry[3].invert = "false"; reject(badForm);
@@ -148,28 +143,20 @@ static void testConfigAndDecoding() {
 
     InverterConfig restored;
     assert(decodeInverterConfig(saved.c_str(), restored) && record(restored) == saved);
-    auto oldSaved = saved;
-    const auto oldUnit = oldSaved.find("|2|sun2000-emma");
-    assert(oldUnit != std::string::npos);
-    oldSaved.replace(oldUnit, 3, "|7|");
-    assert(decodeInverterConfig(oldSaved.c_str(), restored));
-    assert(restored.inverterUnit() == 2 && record(restored) == saved);
-    auto inputRegisters = saved;
-    inputRegisters.replace(inputRegisters.find("|holding|"), 9, "|input|");
-    assert(!decodeInverterConfig(inputRegisters.c_str(), restored) && record(restored) == saved);
     for (const char *bad : {"", "2|192.0.2.1|502|1|sun2000|0|37113|inverter|0|export",
-             "1|192.0.2.1|502|1|sun2000|0|37113|inverter|0|export|extra"}) {
+             "1|192.0.2.1|502|1|sun2000|0|37113|inverter|0|export"}) {
         assert(!decodeInverterConfig(bad, restored) && record(restored) == saved);
     }
-    assert(decodeInverterConfig("1|192.0.2.1|502|1|unavailable|0|37113|inverter|0|export", restored));
+    for (const auto &invalid : {saved + "|extra", saved.substr(0, saved.rfind('|'))}) {
+        assert(!decodeInverterConfig(invalid.c_str(), restored) && record(restored) == saved);
+    }
+    auto missingPreset = saved;
+    const auto presetPosition = missingPreset.find("sun2000-emma");
+    assert(presetPosition != std::string::npos);
+    missingPreset.replace(presetPosition, strlen("sun2000-emma"), "unavailable");
+    assert(decodeInverterConfig(missingPreset.c_str(), restored));
     assert(restored.preset == PresetId("unavailable") && !restored.configured());
-    assert(decodeInverterConfig("1|192.0.2.1|502|7|sun2000-emma|1|31913|fixed|0|import", restored));
-    assert(restored.inverterUnit() == 2 && restored.overrideTelemetry[3]);
-    assert(restored.telemetry(3).registerAddress == 31913 && restored.telemetry(3).invert);
-    assert(restored.telemetry(0).registerAddress == 37004 && restored.telemetry(0).scale == 0.1);
 
-    auto legacy = form; legacy.preset = nullptr; legacy.hasTelemetry = false;
-    assert(!parseInverterForm(legacy, config) && record(config) == saved);
     form.telemetry[3].overrideValue = nullptr; form.preset = "sun2000";
     assert(!parseInverterForm(form, config) && !config.overrideTelemetry[3]);
 }
@@ -264,7 +251,7 @@ static void testPollingAndSwitching() {
     rebooted.begin();
     const auto restored = rebooted.getConfig();
     assert(record(restored) == record(config));
-    assert(rebooted.port == 502 && rebooted.getConfig().inverterUnit() == 2);
+    assert(rebooted.port == 502 && rebooted.getConfig().telemetry(0).unit == 2);
 }
 
 static void testOverridesAndStorageFailures() {
@@ -275,7 +262,7 @@ static void testOverridesAndStorageFailures() {
     auto config = inverter.getConfig();
     config.preset = PresetId("sun2000-emma");
     config.overrideTelemetry[3] = true;
-    config.telemetryOverride[3] = TelemetryConfig(31913, UnitMode::Fixed, 0, ValueType::I32, 1, WordOrder::HighFirst, true, true);
+    config.telemetryOverride[3] = TelemetryConfig(31913, 0, ValueType::I32, 1, WordOrder::HighFirst, true, true);
     assert(inverter.saveConfig(config) == Inverter::SaveResult::Saved);
     inverter.update();
     assert(bus.requests[3].address == 31913 && bus.requests[3].unit == 0);
@@ -286,11 +273,12 @@ static void testOverridesAndStorageFailures() {
     assert(rebooted.getConfig().overrideTelemetry[3]);
     assert(rebooted.getConfig().telemetry(3).registerAddress == 31913);
 
-    // Following the inverter unit remains distinct from a literal unit zero.
-    config.telemetryOverride[3].unitMode = UnitMode::Inverter;
+    // Each reading has its own unit; changing one leaves the others intact.
+    config.telemetryOverride[3].unit = 5;
     assert(inverter.saveConfig(config) == Inverter::SaveResult::Saved);
     inverter.update();
-    assert(bus.requests[3].address == 31913 && bus.requests[3].unit == 2);
+    assert(bus.requests[3].address == 31913 && bus.requests[3].unit == 5);
+    for (size_t i = 0; i < 3; ++i) assert(bus.requests[i].unit == 2);
     replyToPoll(bus, INT32_MAX);
     assert(!inverter.update() && !inverter.hasValidReadings());
     fakeMillis += 10000;
@@ -392,10 +380,10 @@ static void testAllTelemetryOverrides() {
     inverter.update();
     assert(bus.requests.empty() && !inverter.hasValidReadings());
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) config.overrideTelemetry[i] = true;
-    config.telemetryOverride[0] = TelemetryConfig(100, UnitMode::Fixed, 3, ValueType::U32, 0.01);
-    config.telemetryOverride[1] = TelemetryConfig(110, UnitMode::Fixed, 4, ValueType::I16);
-    config.telemetryOverride[2] = TelemetryConfig(120, UnitMode::Fixed, 5, ValueType::Float32, 1000);
-    config.telemetryOverride[3] = TelemetryConfig(130, UnitMode::Fixed, 0, ValueType::I32, 1,
+    config.telemetryOverride[0] = TelemetryConfig(100, 3, ValueType::U32, 0.01);
+    config.telemetryOverride[1] = TelemetryConfig(110, 4, ValueType::I16);
+    config.telemetryOverride[2] = TelemetryConfig(120, 5, ValueType::Float32, 1000);
+    config.telemetryOverride[3] = TelemetryConfig(130, 0, ValueType::I32, 1,
         WordOrder::LowFirst, false, true);
     assert(config.configured());
     assert(inverter.saveConfig(config) == Inverter::SaveResult::Saved);
@@ -404,7 +392,7 @@ static void testAllTelemetryOverrides() {
     for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
         const auto t = config.telemetry(i);
         assert(bus.requests[i].address == t.registerAddress);
-        assert(bus.requests[i].unit == t.fixedUnit && bus.requests[i].count == t.words());
+        assert(bus.requests[i].unit == t.unit && bus.requests[i].count == t.words());
     }
     bus.reply(0, 7500);
     bus.reply(1, -125);
@@ -446,15 +434,16 @@ static void testPresetFiles(const std::string &directory) {
     DevicePreset parsed;
     const char *error;
     assert(parseDevicePresetToml(source.c_str(), source.size(), parsed, error));
-    assert(parsed.id == PresetId("sun2000-emma") && parsed.defaultUnit == 2);
-    assert(parsed.telemetry[3].invert && parsed.telemetry[3].fixedUnit == 0);
+    assert(parsed.id == PresetId("sun2000-emma") && parsed.telemetry[0].unit == 2);
+    assert(parsed.telemetry[3].invert && parsed.telemetry[3].unit == 0);
     const auto rejects = [&](const std::string &invalid) {
         assert(!parseDevicePresetToml(invalid.c_str(), invalid.size(), parsed, error));
         assert(error && parsed.id == PresetId("sun2000-emma"));
     };
-    rejects(replaceOnce(source, "default_unit = 2", "default_unit = 248"));
-    rejects(replaceOnce(source, "default_unit = 2", "default_unit = 02"));
-    rejects(replaceOnce(source, "default_unit = 2", "default_unit = 2.0"));
+    rejects(replaceOnce(source, "unit = 2", "unit = 248"));
+    rejects(replaceOnce(source, "unit = 2", "unit = 02"));
+    rejects(replaceOnce(source, "unit = 2", "unit = 2.0"));
+    rejects(replaceOnce(source, "unit = 2\n", ""));
     rejects(replaceOnce(source, "register = 31657", "register = 65535"));
     rejects(replaceOnce(source, "scale = 0.1", "scale = 0"));
     rejects(replaceOnce(source, "scale = 0.1", "scale = nan"));
@@ -465,14 +454,14 @@ static void testPresetFiles(const std::string &directory) {
     rejects(replaceOnce(source, "[soc]", "unexpected = 1\n[soc]"));
     rejects(replaceOnce(source, "[soc]", "[soc]\nkind = \"input\""));
     rejects(replaceOnce(source, "[soc]", "default_unit = 2\n[soc]"));
-    rejects(replaceOnce(source, "\nunit_mode = \"fixed\"", "\nunit_mode = \"wrong\""));
+    rejects(replaceOnce(source, "[soc]", "[soc]\nunit_mode = \"inverter\""));
     rejects(replaceOnce(source, "ignore_no_data = false\n", ""));
     rejects(source.substr(0, source.find("[grid]")));
     rejects(replaceOnce(source, "name = \"Huawei SUN2000 + EMMA built-in meter\"", "name = \"Unclosed"));
     rejects(replaceOnce(source, "name = \"Huawei SUN2000 + EMMA built-in meter\"", "name = \"" + std::string(260, 'x') + "\""));
     auto readable = replaceOnce(source, "register = 37004", "register = 37_004 # inline comment");
     readable = replaceOnce(readable, "scale = 0.1", "scale = 1e-1");
-    readable = replaceOnce(readable, "default_unit = 2", "default_unit = +2");
+    readable = replaceOnce(readable, "unit = 2", "unit = +2");
     readable = replaceOnce(readable, "name = \"Huawei SUN2000 + EMMA built-in meter\"", "name = 'EMMA # literal label'");
     assert(parseDevicePresetToml(readable.c_str(), readable.size(), parsed, error));
     assert(std::string(parsed.label) == "EMMA # literal label" && parsed.telemetry[0].registerAddress == 37004);
@@ -483,7 +472,7 @@ static void testPresetFiles(const std::string &directory) {
     const auto presets = directory + "/presets";
     assert(mkdir(presets.c_str(), 0700) == 0);
     auto custom = replaceOnce(source, "sun2000-emma", "lab-device");
-    custom = replaceOnce(custom, "default_unit = 2", "default_unit = 3");
+    custom = replaceOnce(custom, "unit = 2", "unit = 3");
     custom = replaceOnce(custom, "register = 37004", "register = 123");
     std::ofstream(presets + "/custom.toml") << custom;
     std::ofstream(presets + "/ignored.txt") << "not a preset";
@@ -491,7 +480,7 @@ static void testPresetFiles(const std::string &directory) {
     assert(loadDevicePresets());
     assert(devicePresetRegistry().size() == 1 && findDevicePreset("lab-device"));
     InverterConfig config;
-    assert(applyDevicePreset(config, PresetId("lab-device")) && config.inverterUnit() == 3);
+    assert(applyDevicePreset(config, PresetId("lab-device")) && config.telemetry(0).unit == 3);
     assert(config.telemetry(0).registerAddress == 123);
     assert(telemetryRow(config, 0).find("name=\"settings-soc-unit\"\n       value=\"3\"") != std::string::npos);
     assert(inverterSettingsValue("DEVICE_PRESETS", config).find("lab-device") != std::string::npos);
@@ -502,8 +491,10 @@ static void testPresetFiles(const std::string &directory) {
     assert(customInverter.saveConfig(config) == Inverter::SaveResult::Saved);
     customInverter.update();
     assert(ModbusIP::latest->requests[0].address == 123 && ModbusIP::latest->requests[0].unit == 3);
+    assert(ModbusIP::latest->requests[1].unit == 2 && ModbusIP::latest->requests[2].unit == 2);
+    assert(ModbusIP::latest->requests[3].unit == 0);
     custom = replaceOnce(custom, "register = 123", "register = 124");
-    custom = replaceOnce(custom, "default_unit = 3", "default_unit = 4");
+    custom = replaceOnce(custom, "unit = 3", "unit = 4");
     std::ofstream(presets + "/custom.toml") << custom;
     assert(loadDevicePresets());
     Inverter changedFile;

@@ -1,13 +1,9 @@
-# Default telemetry mappings. Register addresses are the wire addresses (no offset).
-# Fixed unit is used only when unit_mode = "fixed". Scale converts to percent or watts.
 id = "sun2000"
 name = "Huawei SUN2000"
-default_unit = 1
 requires_overrides = false
 
 [soc]
 register = 37004
-unit_mode = "inverter"
 unit = 1
 type = "u16"
 word_order = "high"
@@ -17,7 +13,6 @@ ignore_no_data = false
 
 [battery]
 register = 37001
-unit_mode = "inverter"
 unit = 1
 type = "i32"
 word_order = "high"
@@ -27,7 +22,6 @@ ignore_no_data = false
 
 [plant]
 register = 32064
-unit_mode = "inverter"
 unit = 1
 type = "i32"
 word_order = "high"
@@ -37,7 +31,6 @@ ignore_no_data = false
 
 [grid]
 register = 37113
-unit_mode = "inverter"
 unit = 1
 type = "i32"
 word_order = "high"

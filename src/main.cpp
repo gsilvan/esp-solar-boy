@@ -149,9 +149,6 @@ void setup() {
     httpServer.on("/getInverterPort", HTTP_GET, [](AsyncWebServerRequest *request){
         request->send(200, "text/plain", String(inverter.getConfig().port));
     });
-    httpServer.on("/getInverterModbusUnit", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(200, "text/plain", String(inverter.getConfig().inverterUnit()));
-    });
     httpServer.on("/getConnectionStatus", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(200, "text/plain", inverter.hasValidReadings()
             ? R"(<div class="connection-indicator connected"></div><div class="connection-text connected-text">Inverter connected</div>)"
@@ -178,7 +175,7 @@ void setup() {
             return parameter ? parameter->value().c_str() : nullptr;
         };
         const char *telemetryVersion = posted("settings-telemetry-version");
-        if (telemetryVersion && strcmp(telemetryVersion, "2") != 0) {
+        if (!telemetryVersion || strcmp(telemetryVersion, "3") != 0) {
             request->send(400, "text/plain", "Invalid telemetry form version.");
             return;
         }
@@ -186,14 +183,12 @@ void setup() {
         form.ip = posted("settings-inverter-ip");
         form.port = posted("settings-inverter-port");
         form.preset = posted("settings-device-preset");
-        form.hasTelemetry = telemetryVersion != nullptr;
         for (size_t i = 0; i < TELEMETRY_COUNT; ++i) {
             const String prefix = "settings-" + String(telemetryKey(i)) + "-";
             auto &mapping = form.telemetry[i];
             mapping.overrideValue = posted(prefix + "override");
             mapping.address = posted(prefix + "register");
             mapping.unit = posted(prefix + "unit");
-            mapping.unitMode = "fixed";
             mapping.valueType = posted(prefix + "type");
             mapping.wordOrder = posted(prefix + "order");
             mapping.scale = posted(prefix + "scale");

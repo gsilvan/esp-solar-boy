@@ -1,13 +1,9 @@
-# Default telemetry mappings. Register addresses are the wire addresses (no offset).
-# Fixed unit is used only when unit_mode = "fixed". Scale converts to percent or watts.
 id = "generic"
 name = "Generic Modbus (placeholder mappings)"
-default_unit = 1
 requires_overrides = true
 
 [soc]
 register = 0
-unit_mode = "inverter"
 unit = 1
 type = "u16"
 word_order = "high"
@@ -17,7 +13,6 @@ ignore_no_data = false
 
 [battery]
 register = 2
-unit_mode = "inverter"
 unit = 1
 type = "i32"
 word_order = "high"
@@ -27,7 +22,6 @@ ignore_no_data = false
 
 [plant]
 register = 4
-unit_mode = "inverter"
 unit = 1
 type = "i32"
 word_order = "high"
@@ -37,7 +31,6 @@ ignore_no_data = false
 
 [grid]
 register = 6
-unit_mode = "inverter"
 unit = 1
 type = "i32"
 word_order = "high"

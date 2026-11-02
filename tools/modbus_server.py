@@ -118,16 +118,14 @@ def load_presets():
     return presets
 
 
-def create_context(preset="sun2000", grid_power=500, inverter_unit=None):
+def create_context(preset="sun2000", grid_power=500):
     definition = load_presets()[preset]
-    if inverter_unit is None:
-        inverter_unit = definition["default_unit"]
     values = {"soc": 22, "battery": 20420, "plant": 1337, "grid": grid_power}
     devices = {}
     formats = {"u16": "H", "i16": "h", "u32": "I", "i32": "i", "float32": "f"}
     for key, sample in values.items():
         mapping = definition[key]
-        unit = inverter_unit if mapping["unit_mode"] == "inverter" else mapping["unit"]
+        unit = mapping["unit"]
         registers = devices.setdefault(unit, {})
         raw = 0 if definition["requires_overrides"] else sample / mapping["scale"]
         if mapping["invert"]:
@@ -150,12 +148,11 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--preset", choices=sorted(load_presets()), default="sun2000")
     parser.add_argument("--grid-power", type=int, default=500, help="Watts: positive export, negative import")
-    parser.add_argument("--inverter-unit", type=int, choices=range(1, 248))
     args = parser.parse_args()
     logging.basicConfig(level=logging.DEBUG)
     _logger.info(f"Starting Modbus TCP Server on port {PORT}")
     server = PipelinedModbusTcpServer(
-        context=create_context(args.preset, args.grid_power, args.inverter_unit),
+        context=create_context(args.preset, args.grid_power),
         address=("0.0.0.0", PORT), framer=FramerType.SOCKET
     )
     try:
